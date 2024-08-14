@@ -4,12 +4,19 @@
 #include <iostream>
 #include <std-k.hpp>
 
+const std::string GlowStylesheet = "glowstyle";
+
 const std::string ProgramName = "dolores";
 const std::string Version = "0.0.0";
 const std::string UsageNotes = R"(usage: dolores [ -h/-v ]
 options:
     -h / --help         show help and usage notes
     -v / --version      print version and exit)";
+
+// Environment variable to store the OpenAI API key
+#define OPENAI_API_KEY_ENV_VAR "OPENAIMainKey"
+
+#define SYSTEMCONTENT "You are Dolores, an AI assistant focused on code help, primarily in C++, with occasional support for JS and Python. Default to C++ if not specified. Max, your owner, uses a custom DWM UI on Arch Linux and prefers open-source, DIY computing"
 
 #endif
 
