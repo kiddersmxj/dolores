@@ -5,6 +5,7 @@
 #include "curl.hpp"
 #include "tokeniser.hpp"
 #include "output.hpp"
+#include "database.hpp"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>

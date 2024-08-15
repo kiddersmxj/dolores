@@ -43,6 +43,8 @@ add_executable(dolores
     src/curl.cpp
     src/tokeniser.cpp
     src/output.cpp
+    src/display.cpp
+    src/database.cpp
 )
 
 # Include directories

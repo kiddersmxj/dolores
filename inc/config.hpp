@@ -5,6 +5,7 @@
 #include <std-k.hpp>
 
 const std::string GlowStylesheet = "glowstyle";
+const std::string ChatArchiveDir = HOME + "/.local/share/dolores/";
 
 const std::string ProgramName = "dolores";
 const std::string Version = "0.0.0";
