@@ -40,6 +40,8 @@ if(NOT nlohmann_json_FOUND)
     FetchContent_MakeAvailable(json)
 endif()
 
+include(FetchContent)
+ 
 set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 FetchContent_Declare(ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
@@ -51,6 +53,9 @@ if(NOT ftxui_POPULATED)
   FetchContent_Populate(ftxui)
   add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 # Add the executable
 add_executable(dolores
