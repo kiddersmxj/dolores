@@ -9,6 +9,21 @@
 
 using json = nlohmann::json;
 
+std::string GetInput() {
+    std::string user_content;
+    while(user_content.empty()) {
+        std::cout << "Enter your prompt (or type 'exit' to quit): ";
+        std::getline(std::cin, user_content);
+        if (user_content == "exit")
+            break;
+        if (user_content.empty()) {
+            std::cerr << "Error: No input provided." << std::endl;
+            continue;
+        }
+    }
+    return user_content;
+}
+
 int main(int argc, char** argv) {
     int HelpFlag = 0;
     int VersionFlag = 0;
@@ -67,33 +82,22 @@ int main(int argc, char** argv) {
         const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
         if (!api_key) {
             std::cerr << "Error: " << OPENAI_API_KEY_ENV_VAR << " environment variable not set." << std::endl;
-            return 1;
+            return EXIT_FAILURE;
         }
-
-        std::string system_content = SYSTEMCONTENT;
-        std::string user_content;
-        
-        // Add the initial system message to the history
-        Json Message(system_content, api_key);
 
         // Generate the chats UID
         const std::string uid = Database.generateUID();
         std::string Name = "";
         int MessageIndex = 0;
+        std::string system_content = SYSTEMCONTENT;
+        // Add the initial system message to the history
+        Json Message(system_content, api_key);
 
         // Interactive loop for repeated user input
         while (true) {
-            std::cout << "Enter your prompt (or type 'exit' to quit): ";
-            std::getline(std::cin, user_content);
-
-            if (user_content == "exit") {
+            std::string user_content = GetInput();
+            if (user_content == "exit")
                 break;
-            }
-
-            if (user_content.empty()) {
-                std::cerr << "Error: No input provided." << std::endl;
-                continue;
-            }
 
             Message.Add(user_content, USER);
 
@@ -105,11 +109,8 @@ int main(int argc, char** argv) {
             // Save the JSON data to a file
             Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
-            // Send the request and get the response
-            std::string response = Message.Send();
-
             // Parse the response and get the assistant's reply
-            std::string assistant_reply = Message.ParseResponse(response);
+            std::string assistant_reply = Message.ParseResponse(Message.Send());
             /* std::cout << assistant_reply << std::endl; */
 
             if (!assistant_reply.empty()) {
