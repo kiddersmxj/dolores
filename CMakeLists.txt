@@ -57,11 +57,6 @@ endif()
 # Add the executable
 add_executable(dolores
     src/dolores.cpp
-    src/curl.cpp
-    src/tokeniser.cpp
-    src/output.cpp
-    src/display.cpp
-    src/database.cpp
 )
 
 # Include directories
@@ -90,6 +85,11 @@ install(
 target_sources(dolores
     PRIVATE src/dolores.cpp
     PRIVATE src/curl.cpp
+    PRIVATE src/tokeniser.cpp
+    PRIVATE src/output.cpp
+    PRIVATE src/display.cpp
+    PRIVATE src/database.cpp
+    PRIVATE src/json.cpp
 )
 
 # Copyright (c) 2024, Maxamilian Kidd-May
