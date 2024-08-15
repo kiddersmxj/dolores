@@ -9,6 +9,7 @@
 #include <regex>
 
 std::vector<std::string> tokenize(const std::string &text);
+int countTokens(const std::vector<std::string>& tokens);
 
 #endif
 

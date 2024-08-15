@@ -15,6 +15,7 @@ class Database {
         std::string generateUID();
     private:
         std::vector<std::string> jsonFiles;
+        std::vector<std::string> jsonNames;
 };
 
 // Copyright (c) 2024, Maxamilian Kidd-May

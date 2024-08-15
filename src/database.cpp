@@ -21,15 +21,30 @@ Database::Database() {
         for (const auto& entry : fs::directory_iterator(ChatArchiveDir)) {
             if (entry.is_regular_file() && entry.path().extension() == ".json") {
                 jsonFiles.push_back(entry.path().filename().string());
+
+                std::string Name = "";
+
+                // Open the JSON file and parse it
+                std::ifstream file(entry.path());
+                if (file.is_open()) {
+                    json j;
+                    file >> j;
+
+                    // Check if the "Name" key exists and add its value to the names vector
+                    for (const auto& item : j) {
+                        if (item.is_array() && !item.empty() && item[0].is_string() && item[0] == "Name") {
+                            Name = item[1].get<std::string>();
+                            jsonNames.push_back(Name);
+                        }
+                    }
+                }
+                std::cout << entry.path().filename().string() << " - " << Name << std::endl;
             }
         }
     } catch (const fs::filesystem_error& e) {
         std::cerr << "Filesystem error: " << e.what() << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "General error: " << e.what() << std::endl;
-    }
-    for(const auto& file: jsonFiles) {
-        std::cout << file << std::endl;
     }
 }
 
@@ -68,7 +83,7 @@ void Database::SaveFile(const json& request_payload, const std::string& dir, con
     if (file.is_open()) {
         file << NamedFile.dump(4); // Pretty-print JSON with an indent of 4 spaces
         file.close();
-        std::cout << "Saved conversation to " << filename << std::endl;
+        std::cout << "Saved conversation to " << filename << " - " << Name << std::endl;
     } else {
         std::cerr << "Error: Unable to open file for writing: " << filename << std::endl;
     }

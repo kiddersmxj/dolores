@@ -15,6 +15,14 @@ std::vector<std::string> tokenize(const std::string &text) {
     return tokens;
 }
 
+int countTokens(const std::vector<std::string>& tokens) {
+    int token_count = 0;
+    for (const auto& token : tokens) {
+        token_count += token.length();
+    }
+    return token_count;
+}
+
 // Copyright (c) 2024, Maxamilian Kidd-May
 // All rights reserved.
 

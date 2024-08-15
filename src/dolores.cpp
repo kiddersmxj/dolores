@@ -30,21 +30,32 @@ std::string ParseResponse(const std::string& response) {
     }
 }
 
-int countTokens(const std::vector<std::string>& tokens) {
-    int token_count = 0;
-    for (const auto& token : tokens) {
-        token_count += token.length();
-    }
-    return token_count;
-}
+std::string GetName(std::deque<json> message_history, std::string model, \
+        std::string system_content, std::string user_content, std::string api_key) {
+    // Create the NameRequest
+    json NameRequest = {
+        {"model", model},
+        {"messages", json::array()}
+    };
 
-// Function to get the current timestamp as a string
-std::string getCurrentTimestamp() {
-    std::time_t now = std::time(nullptr);
-    std::tm* localTime = std::localtime(&now);
-    std::ostringstream oss;
-    oss << std::put_time(localTime, "%Y-%m-%d_%H-%M-%S");
-    return oss.str();
+    // Add the system message
+    NameRequest["messages"].push_back({
+        {"role", "system"},
+        {"content", system_content}
+    });
+
+    // Add each message from the existing message history
+    for (const auto& message : message_history) {
+        NameRequest["messages"].push_back(message);
+    }
+
+    // Add the user message
+    NameRequest["messages"].push_back({
+        {"role", "user"},
+        {"content", NAMECONTENTPREFIX + user_content}
+    });
+    /* std::cout << NameRequest.dump(4) << std::endl; */
+    return ParseResponse(sendOpenAIRequest(api_key, NameRequest.dump()));
 }
 
 int main(int argc, char** argv) {
@@ -57,7 +68,6 @@ int main(int argc, char** argv) {
         { "help", no_argument, &HelpFlag, 1 },
         { "version", no_argument, &VersionFlag, 1 },
         { "test", no_argument, &TestFlag, 1 },
-        { 0 }
     };
 
     while (1) {
@@ -109,7 +119,6 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        std::string model = "gpt-4o-mini";
         std::string system_content = SYSTEMCONTENT;
         std::string user_content;
 
@@ -127,6 +136,7 @@ int main(int argc, char** argv) {
         // Generate the chats UID
         const std::string uid = Database.generateUID();
         std::string Name = "";
+        long MessageIndex = 0;
 
         // Interactive loop for repeated user input
         while (true) {
@@ -142,30 +152,18 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            if(Name == "") {
-                json NameRequest = {
-                    {"model", model},
-                    {"messages", {
-                        {
-                            {"role", "system"},
-                            {"content", system_content}
-                        },
-                        {
-                            {"role", "user"},
-                            {"content", "3-4 word name for the question (no quotes): " + user_content}
-                        }
-                    }}
-                };
-                std::cout << NameRequest.dump() << std::endl;
-                Name = ParseResponse(sendOpenAIRequest(api_key, NameRequest.dump()));
-            }
-
             // Tokenize the input text
             std::vector<std::string> input_tokens = tokenize(user_content);
             int input_token_count = countTokens(input_tokens);
             total_input_tokens += input_token_count;
             /* std::cout << "Input token count: " << input_token_count << std::endl; */
             /* std::cout << "Total input tokens: " << total_input_tokens << std::endl; */
+
+            /* if(MessageIndex % 5 == 0) */
+            if(MessageIndex == 0) {
+                Name = GetName(message_history, model, system_content, user_content, api_key); 
+                total_input_tokens += input_token_count;
+            }
 
             // Add user's message to the history
             message_history.push_back({
@@ -214,6 +212,8 @@ int main(int argc, char** argv) {
 
                 // Output the assistant's response with Markdown formatting
                 outputMarkdownWithGlow(assistant_reply);
+
+                MessageIndex++;
             }
         }
         return EXIT_SUCCESS;
