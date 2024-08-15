@@ -18,7 +18,9 @@ options:
 // Environment variable to store the OpenAI API key
 #define OPENAI_API_KEY_ENV_VAR "OPENAIMainKey"
 
-#define NAMECONTENTPREFIX "3-4 word name for this whole message thread (no quotes): "
+#define NAMECONTENTPREFIX "maximum 25 char name for this whole message thread (no quotes): "
+
+#define UIDRANGE 1000000000LL, 9999999999LL
 
 #define SYSTEMCONTENT "You are Dolores, an AI assistant focused on code help, primarily in C++, with occasional support for JS and Python. Default to C++ if not specified. Max, your owner, uses a custom DWM UI on Arch Linux and prefers open-source, DIY computing"
 

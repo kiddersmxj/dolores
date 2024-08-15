@@ -55,7 +55,7 @@ Database::~Database() {
 std::string Database::generateUID() {
     std::random_device rd;  // Seed for the random number engine
     std::mt19937_64 gen(rd()); // Use a 64-bit Mersenne Twister engine
-    std::uniform_int_distribution<long long> dis(1000000000LL, 9999999999LL); // Range for 10 digits
+    std::uniform_int_distribution<long long> dis(UIDRANGE); // Range for 10 digits
     return std::to_string(dis(gen));
 }
 
