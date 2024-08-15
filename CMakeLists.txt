@@ -77,6 +77,10 @@ target_link_libraries(dolores
     PRIVATE std-k
     PRIVATE CURL::libcurl
     PRIVATE nlohmann_json::nlohmann_json
+    PRIVATE ftxui::screen
+    PRIVATE ftxui::dom
+    PRIVATE ftxui::component
+    PRIVATE std-k
 )
 
 # Install target
