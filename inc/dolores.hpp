@@ -6,6 +6,7 @@
 #include "tokeniser.hpp"
 #include "output.hpp"
 #include "database.hpp"
+#include "json.hpp"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
