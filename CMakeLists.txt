@@ -21,6 +21,9 @@ if(NOT CURL_FOUND)
         URL https://github.com/curl/curl/archive/refs/tags/curl-7_82_0.tar.gz
     )
     FetchContent_MakeAvailable(curl)
+endif()
+
+if(NOT TARGET CURL::libcurl)
     add_library(CURL::libcurl INTERFACE IMPORTED)
     target_include_directories(CURL::libcurl INTERFACE ${curl_SOURCE_DIR}/include)
     target_link_libraries(CURL::libcurl INTERFACE ${curl_BINARY_DIR}/lib/libcurl.a)
