@@ -5,6 +5,7 @@
 #include <fstream>
 #include <random>
 
+namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 class Database {
@@ -16,6 +17,15 @@ class Database {
     private:
         std::vector<std::string> jsonFiles;
         std::vector<std::string> jsonNames;
+
+    struct FileData {
+        fs::path filePath;
+        std::time_t lastModified;
+    };
+
+    static bool compareByModifiedTime(const FileData& a, const FileData& b) {
+        return a.lastModified > b.lastModified;
+    }
 };
 
 // Copyright (c) 2024, Maxamilian Kidd-May

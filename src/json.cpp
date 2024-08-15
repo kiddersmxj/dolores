@@ -50,7 +50,7 @@ std::string Json::Name() {
         {"role", "user"},
         {"content", NAMECONTENTPREFIX}
     });
-    std::cout << NameRequest.dump(4) << std::endl;
+    // std::cout << NameRequest.dump(4) << std::endl;
     return ParseResponse(sendOpenAIRequest(api_key, NameRequest.dump()));
 }
 

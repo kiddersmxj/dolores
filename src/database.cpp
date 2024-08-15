@@ -1,7 +1,5 @@
 #include "../inc/database.hpp"
 
-namespace fs = std::filesystem;
-
 Database::Database() {
     // Check if the directory exists, and create it if it doesn't
     try {
@@ -16,30 +14,43 @@ Database::Database() {
         std::cerr << "Filesystem error: " << e.what() << std::endl;
     }
 
+    // Vector to store files and their last modified time
+    std::vector<FileData> files;
+
     // Iterate through the directory and collect .json file names
     try {
         for (const auto& entry : fs::directory_iterator(ChatArchiveDir)) {
             if (entry.is_regular_file() && entry.path().extension() == ".json") {
-                jsonFiles.push_back(entry.path().filename().string());
+                FileData fileData;
+                fileData.filePath = entry.path();
+                fileData.lastModified = fs::last_write_time(entry).time_since_epoch().count();
+                files.push_back(fileData);
+            }
+        }
 
-                std::string Name = "";
+        // Sort files by last modified time (most recent first)
+        std::sort(files.begin(), files.end(), compareByModifiedTime);
 
-                // Open the JSON file and parse it
-                std::ifstream file(entry.path());
-                if (file.is_open()) {
-                    json j;
-                    file >> j;
+        // Process the sorted files
+        for (const auto& fileData : files) {
+            jsonFiles.push_back(fileData.filePath.filename().string());
+            std::string Name = "";
 
-                    // Check if the "Name" key exists and add its value to the names vector
-                    for (const auto& item : j) {
-                        if (item.is_array() && !item.empty() && item[0].is_string() && item[0] == "Name") {
-                            Name = item[1].get<std::string>();
-                            jsonNames.push_back(Name);
-                        }
+            // Open the JSON file and parse it
+            std::ifstream file(fileData.filePath);
+            if (file.is_open()) {
+                json j;
+                file >> j;
+
+                // Check if the "Name" key exists and add its value to the jsonNames vector
+                for (const auto& item : j) {
+                    if (item.is_array() && !item.empty() && item[0].is_string() && item[0] == "Name") {
+                        Name = item[1].get<std::string>();
+                        jsonNames.push_back(Name);
                     }
                 }
-                std::cout << entry.path().filename().string() << " - " << Name << std::endl;
             }
+            std::cout << fileData.filePath.filename().string() << " - " << Name << std::endl;
         }
     } catch (const fs::filesystem_error& e) {
         std::cerr << "Filesystem error: " << e.what() << std::endl;

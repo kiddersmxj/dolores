@@ -96,13 +96,14 @@ int main(int argc, char** argv) {
             }
 
             Message.Add(user_content, USER);
-            // Save the JSON data to a file
-            Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
             /* if(MessageIndex % 5 == 0) */
             if(MessageIndex == 0) {
                 Name = Message.Name();
             }
+
+            // Save the JSON data to a file
+            Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
             // Send the request and get the response
             std::string response = Message.Send();
