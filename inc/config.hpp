@@ -18,7 +18,11 @@ options:
 // Environment variable to store the OpenAI API key
 #define OPENAI_API_KEY_ENV_VAR "OPENAIMainKey"
 
-#define NAMECONTENTPREFIX "maximum 25 char name for this whole message thread (no quotes): "
+// role defenitions
+#define USER "user"
+#define ASSISTANT "assistant"
+
+#define NAMECONTENTPREFIX "maximum 25 char name for this whole message thread (no quotes)"
 
 #define UIDRANGE 1000000000LL, 9999999999LL
 

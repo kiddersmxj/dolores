@@ -72,22 +72,14 @@ int main(int argc, char** argv) {
 
         std::string system_content = SYSTEMCONTENT;
         std::string user_content;
-
-        // Message history to maintain the context
-        std::deque<json> message_history;
-        int total_input_tokens = 0;
-        int total_output_tokens = 0;
         
         // Add the initial system message to the history
-        message_history.push_back({
-            {"role", "system"},
-            {"content", system_content}
-        });
+        Json Message(system_content, api_key);
 
         // Generate the chats UID
         const std::string uid = Database.generateUID();
         std::string Name = "";
-        long MessageIndex = 0;
+        int MessageIndex = 0;
 
         // Interactive loop for repeated user input
         while (true) {
@@ -103,63 +95,30 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            // Tokenize the input text
-            std::vector<std::string> input_tokens = tokenize(user_content);
-            int input_token_count = countTokens(input_tokens);
-            total_input_tokens += input_token_count;
-            /* std::cout << "Input token count: " << input_token_count << std::endl; */
-            /* std::cout << "Total input tokens: " << total_input_tokens << std::endl; */
+            Message.Add(user_content, USER);
+            // Save the JSON data to a file
+            Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
             /* if(MessageIndex % 5 == 0) */
             if(MessageIndex == 0) {
-                Name = GetName(message_history, model, system_content, user_content, api_key); 
-                total_input_tokens += input_token_count;
+                Name = Message.Name();
             }
 
-            // Add user's message to the history
-            message_history.push_back({
-                {"role", "user"},
-                {"content", user_content}
-            });
-
-            // Prepare the request payload with the message history
-            json request_payload = {
-                {"model", model},
-                {"messages", message_history}
-            };
-
-            // Save the JSON data to a file
-            Database.SaveFile(request_payload, ChatArchiveDir, uid, Name);
-
             // Send the request and get the response
-            std::string response = sendOpenAIRequest(api_key, request_payload.dump());
+            std::string response = Message.Send();
 
             // Parse the response and get the assistant's reply
-            std::string assistant_reply = ParseResponse(response);
+            std::string assistant_reply = Message.ParseResponse(response);
             /* std::cout << assistant_reply << std::endl; */
 
             if (!assistant_reply.empty()) {
-                // Add assistant's reply to the history
-                message_history.push_back({
-                    {"role", "assistant"},
-                    {"content", assistant_reply}
-                });
+                // Add assistant's reply to the thread
+                Message.Add(assistant_reply, ASSISTANT);
 
-                // Tokenize the response text
-                std::vector<std::string> output_tokens = tokenize(assistant_reply);
-                int output_token_count = countTokens(output_tokens);
-                total_output_tokens += output_token_count;
-                /* std::cout << "Output token count: " << output_token_count << std::endl; */
-                /* std::cout << "Total output tokens: " << total_output_tokens << std::endl; */
-                std::cout << "Total tokens: " << (total_input_tokens + total_output_tokens) << std::endl;
-
-                request_payload = {
-                    {"model", model},
-                    {"messages", message_history}
-                };
+                std::cout << "Total tokens: " << GetTokens(user_content, assistant_reply) << std::endl;
 
                 // Save the updated JSON data after the assistant's reply
-                Database.SaveFile(request_payload, ChatArchiveDir, uid, Name);
+                Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
                 // Output the assistant's response with Markdown formatting
                 outputMarkdownWithGlow(assistant_reply);

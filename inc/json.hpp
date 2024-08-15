@@ -7,12 +7,18 @@ using json = nlohmann::json;
 
 class Json {
     public:
-        Json();
+        Json(std::string system_content, std::string api_key);
         ~Json();
+        void Add(std::string user_content, std::string role);
+        std::string Send();
+        json GetRequest();
+        std::string Name();
+        std::string ParseResponse(const std::string& response);
     private:
+        std::string api_key;
+        std::deque<json> messages;
 };
 
-std::string ParseResponse(const std::string& response);
 std::string GetName(std::deque<json> message_history, std::string model, \
         std::string system_content, std::string user_content, std::string api_key);
 

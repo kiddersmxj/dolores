@@ -1,5 +1,23 @@
 #include "../inc/tokeniser.hpp"
 
+int GetTokens(std::string user_content, std::string assistant_reply) {
+    int total_input_tokens = 0;
+    int total_output_tokens = 0;
+    // Tokenize the input text
+    std::vector<std::string> input_tokens = tokenize(user_content);
+    int input_token_count = countTokens(input_tokens);
+    total_input_tokens += input_token_count;
+    /* std::cout << "Input token count: " << input_token_count << std::endl; */
+    /* std::cout << "Total input tokens: " << total_input_tokens << std::endl; */
+    // Tokenize the response text
+    std::vector<std::string> output_tokens = tokenize(assistant_reply);
+    int output_token_count = countTokens(output_tokens);
+    total_output_tokens += output_token_count;
+    /* std::cout << "Output token count: " << output_token_count << std::endl; */
+    /* std::cout << "Total output tokens: " << total_output_tokens << std::endl; */
+    return total_output_tokens + total_input_tokens;
+}
+
 // A function to split a string into tokens
 std::vector<std::string> tokenize(const std::string &text) {
     std::vector<std::string> tokens;

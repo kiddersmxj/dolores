@@ -8,6 +8,7 @@
 #include <vector>
 #include <regex>
 
+int GetTokens(std::string user_content, std::string assistant_reply);
 std::vector<std::string> tokenize(const std::string &text);
 int countTokens(const std::vector<std::string>& tokens);
 
