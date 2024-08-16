@@ -6,9 +6,52 @@ Json::Json(std::string system_content, std::string api_key) : api_key(api_key) {
         {"role", "system"},
         {"content", system_content}
     });
+    messagePairs = parseMessages(messages);
+}
+
+Json::Json(json messages, std::string api_key) : api_key(api_key), messages(messages) {
+    messagePairs = parseMessages(messages);
 }
 
 Json::~Json() {
+}
+
+std::deque<Json::MessagePair> Json::parseMessages(const json& j) {
+    std::deque<MessagePair> messagePairs;
+    std::string current_user_message;
+    std::string current_assistant_message;
+
+    for (const auto& item : j) {
+        std::string role = item.at("role").get<std::string>();
+        std::string content = item.at("content").get<std::string>();
+
+        if (role == USER) {
+            if (!current_user_message.empty() && !current_assistant_message.empty()) {
+                messagePairs.push_back({current_user_message, current_assistant_message});
+                current_user_message.clear();
+                current_assistant_message.clear();
+            }
+            current_user_message = content;
+        } else if (role == ASSISTANT) {
+            current_assistant_message = content;
+        }
+    }
+
+    // Add the last pair if available
+    if (!current_user_message.empty() && !current_assistant_message.empty()) {
+        messagePairs.push_back({current_user_message, current_assistant_message});
+    }
+
+    return messagePairs;
+}
+
+std::string Json::GetMessagePairString() {
+    std::stringstream ss;
+    for (const auto& pair : messagePairs) {
+        ss << pair.user_message << "\n";
+        ss << pair.assistant_message << "\n";
+    }
+    return ss.str();
 }
 
 void Json::Add(std::string user_content, std::string role) {
@@ -36,6 +79,10 @@ json Json::GetRequest() {
         {"messages", messages}
     };
     return request_payload;
+}
+
+json Json::GetMessages() {
+    return messages;
 }
 
 std::string Json::Name() {

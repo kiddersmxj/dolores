@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     }
 
     if(TestFlag) {
-        Database Database;
+        Database Db;
 
         // Get the API key from the environment variable
         const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
         }
 
         // Generate the chats UID
-        const std::string uid = Database.generateUID();
+        const std::string uid = Db.generateUID();
         std::string Name = "";
         int MessageIndex = 0;
         std::string system_content = SYSTEMCONTENT;
@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
             }
 
             // Save the JSON data to a file
-            Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
+            Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
             // Parse the response and get the assistant's reply
             std::string assistant_reply = Message.ParseResponse(Message.Send());
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
                 std::cout << "Total tokens: " << GetTokens(user_content, assistant_reply) << std::endl;
 
                 // Save the updated JSON data after the assistant's reply
-                Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
+                Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
                 // Output the assistant's response with Markdown formatting
                 outputMarkdownWithGlow(assistant_reply);
@@ -131,7 +131,9 @@ int main(int argc, char** argv) {
         return EXIT_SUCCESS;
     }
 
-    Database Database;
+    /* Database Db; */
+    Display Display;
+    Display.Show();
 
     return 0;
 }

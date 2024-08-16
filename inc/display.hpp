@@ -1,7 +1,6 @@
-#ifndef K_DISPLAY
-#define K_DISPLAY
-
 #include "config.hpp"
+#include "database.hpp"
+#include "json.hpp"
 
 #include <stddef.h>    // for size_t
 #include <array>       // for array
@@ -15,7 +14,6 @@
 #include <utility>  // for move
 #include <vector>   // for vector
 
-// #include "ftxui/include/dom/color_info_sorted_2d.ipp"
 #include "ftxui/component/component.hpp"  // for Checkbox, Renderer, Horizontal, Vertical, Input, Menu, Radiobox, ResizableSplitLeft, Tab
 #include "ftxui/component/component_base.hpp"  // for ComponentBase, Component
 #include "ftxui/component/component_options.hpp"  // for MenuOption, InputOption
@@ -27,7 +25,32 @@
 #include "ftxui/screen/color_info.hpp"  // for ColorInfo
 #include "ftxui/screen/terminal.hpp"    // for Size, Dimensions
 
-#endif
+#include <nlohmann/json.hpp>
+#include <filesystem>
+#include <fstream>
+
+using json = nlohmann::json;
+using namespace ftxui;
+
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <random>
+#include <string>
+
+#include <std-k.hpp>
+
+class Display {
+    public:
+        Display();
+        ~Display();
+        void Show();
+    private:
+        Database Db;
+};
 
 // Copyright (c) 2024, Maxamilian Kidd-May
 // All rights reserved.
