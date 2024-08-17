@@ -86,7 +86,7 @@ target_sources(dolores
     PRIVATE src/dolores.cpp
     PRIVATE src/curl.cpp
     PRIVATE src/tokeniser.cpp
-    PRIVATE src/output.cpp
+    PRIVATE src/markdown.cpp
     PRIVATE src/display.cpp
     PRIVATE src/database.cpp
     PRIVATE src/json.cpp

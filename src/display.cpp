@@ -57,57 +57,90 @@ void Display::Show() {
     int scroll_position = 0;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
 
+    // auto tab_content = Renderer([&] {
+    //     // Get terminal width minus the specified width
+    //     int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
+    //     Markdown Md(jsons.at(tab_index).GetMessagePairString(), max_line_width);
+    //     return vbox(Md.RenderMarkdown()) | yframe;
+    // });
+
     auto tab_content = Renderer([&] {
-        if(tab_index != previous_tab_index) {
+        // Reset scroll position if the tab has changed
+        if (tab_index != previous_tab_index) {
             scroll_position = 0;
             previous_tab_index = tab_index;
         }
-        // Split the text content by lines
-        std::vector<std::string> lines;
-        std::string Text = jsons.at(tab_index).GetMessagePairString();
-        std::istringstream iss(Text);
-        std::string line;
-        
-        // Store the wrapped lines
-        std::vector<std::string> wrapped_lines;
-        
+
         // Get terminal width minus the specified width
         int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
 
-        // Wrap lines if they exceed the maximum line width without breaking words
-        while (std::getline(iss, line)) {
-            std::string current_line;
-            std::istringstream word_stream(line);
-            std::string word;
-            
-            while (word_stream >> word) {
-                // If adding the next word exceeds the max width, push the current line and start a new one
-                if (current_line.length() + word.length() + 1 > static_cast<size_t>(max_line_width)) {
-                    wrapped_lines.push_back(current_line);
-                    current_line.clear();
-                }
+        // Use the Markdown class with line wrapping handled natively
+        Markdown Md(jsons.at(tab_index).GetMessagePairString(), max_line_width);
 
-                // Add the word to the current line
-                if (!current_line.empty()) {
-                    current_line += " ";
-                }
-                current_line += word;
-            }
-
-            // Add any remaining part of the line
-            if (!current_line.empty()) {
-                wrapped_lines.push_back(current_line);
-            }
-        }
+        // Render the Markdown content into lines
+        auto rendered_lines = Md.RenderMarkdown();
 
         // Create a view starting from the scroll position
         std::vector<Element> elements;
-        for (size_t i = scroll_position; i < wrapped_lines.size(); ++i) {
-            elements.push_back(text(wrapped_lines[i]));
+        for (size_t i = scroll_position; i < rendered_lines.size(); ++i) {
+            elements.push_back(rendered_lines[i]);
         }
 
+        // Return the view with yframe and the scroll position
         return vbox(elements) | yframe;
     });
+
+    // auto tab_content = Renderer([&] {
+    //     if(tab_index != previous_tab_index) {
+    //         scroll_position = 0;
+    //         previous_tab_index = tab_index;
+    //     }
+    //     // Split the text content by lines
+    //     std::vector<std::string> lines;
+    //     std::string Text = jsons.at(tab_index).GetMessagePairString();
+    //     std::istringstream iss(Text);
+    //     std::string line;
+        
+    //     // Store the wrapped lines
+    //     std::vector<std::string> wrapped_lines;
+        
+    //     // Get terminal width minus the specified width
+    //     int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
+
+    //     // Wrap lines if they exceed the maximum line width without breaking words
+    //     while (std::getline(iss, line)) {
+    //         std::string current_line;
+    //         std::istringstream word_stream(line);
+    //         std::string word;
+            
+    //         while (word_stream >> word) {
+    //             // If adding the next word exceeds the max width, push the current line and start a new one
+    //             if (current_line.length() + word.length() + 1 > static_cast<size_t>(max_line_width)) {
+    //                 wrapped_lines.push_back(current_line);
+    //                 current_line.clear();
+    //             }
+
+    //             // Add the word to the current line
+    //             if (!current_line.empty()) {
+    //                 current_line += " ";
+    //             }
+    //             current_line += word;
+    //         }
+
+    //         // Add any remaining part of the line
+    //         if (!current_line.empty()) {
+    //             wrapped_lines.push_back(current_line);
+    //         }
+    //     }
+
+    //     // Create a view starting from the scroll position
+    //     std::vector<Element> elements;
+    //     for (size_t i = scroll_position; i < wrapped_lines.size(); ++i) {
+    //         elements.push_back(text(wrapped_lines[i]));
+    //     }
+
+    //     return vbox(elements) | yframe;
+    // });
 
     auto main_container = Container::Vertical({
         tab_selection,
@@ -124,7 +157,7 @@ void Display::Show() {
                         tab_content->Render() | flex,
                     }) | flex,
                     separator() | color(Color::RGB(153, 153, 153)),
-                    text(vim_content) | size(ftxui::HEIGHT, EQUAL, 2),
+                    paragraph(vim_content) | size(ftxui::HEIGHT, EQUAL, 2),
                 }) | flex,
             }) | flex
         });

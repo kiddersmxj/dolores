@@ -4,7 +4,6 @@
 #include "config.hpp"
 #include "curl.hpp"
 #include "tokeniser.hpp"
-#include "output.hpp"
 #include "json.hpp"
 #include "display.hpp"
 #include <iostream>

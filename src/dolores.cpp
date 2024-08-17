@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
                 Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
                 // Output the assistant's response with Markdown formatting
-                outputMarkdownWithGlow(assistant_reply);
+                /* outputMarkdownWithGlow(assistant_reply); */
 
                 MessageIndex++;
             }
