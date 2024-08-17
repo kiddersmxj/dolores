@@ -18,7 +18,7 @@ options:
 // Environment variable to store the OpenAI API key
 #define OPENAI_API_KEY_ENV_VAR "OPENAIMainKey"
 
-#define LINEWIDTHCONSTRAINT 28
+#define LINEWIDTHCONSTRAINT 26
 // Adds empty text so that component takes up all space
 #define SPACE " "
 
