@@ -17,6 +17,7 @@ class Markdown {
         std::vector<std::string> WrapCode(const std::string& text, int maxWidth);
         std::vector<ftxui::Element> ParseMarkdownContent();
         ftxui::Element ApplyFormatting(const std::string& line, const std::vector<std::string>& flags);
+        ftxui::Element ParseTextWithStyles(const std::string& text);
         bool StartsWith(const std::string& str, const std::string& prefix);
         std::string CreateTopBorder(int length);
         std::string CreateBottomBorder(int length);

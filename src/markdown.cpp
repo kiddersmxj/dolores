@@ -178,7 +178,7 @@ ftxui::Element Markdown::ApplyFormatting(const std::string& line, const std::vec
         } else if (flag == "Italic") {
             element = text(line) | dim;
         } else if (flag == "InlineCode") {
-            element = text(line) | color(Color::GrayDark);
+            element = text(line) | bgcolor(Color::RGB(71, 71, 71));
         }
     }
 
@@ -193,6 +193,8 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
 
     std::regex codeBlockRegex(R"(^\s*```.*)");  // Regex to match lines starting with optional spaces followed by ```
     std::regex inlineCodeRegex("`([^`]*)`");    // Regex to match inline code sections
+    std::regex boldRegex("\\*\\*(.*?)\\*\\*");
+    std::regex italicRegex("\\*(.*?)\\*");
 
     for (const auto& line : lines) {
         std::vector<std::string> flags;
@@ -233,42 +235,24 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
                 elements.push_back(ApplyFormatting(wrappedLine, flags));
             }
         } else if (line.find("**") != std::string::npos || line.find("*") != std::string::npos || std::regex_search(line, inlineCodeRegex)) {
-            for(auto remainingLine: WrapText(line, maxWidth)) {
+            auto wrappedLines = WrapText(line, maxWidth);
+            for (auto& wrappedLine : wrappedLines) {
+                std::string remainingLine = wrappedLine;
                 std::vector<Element> formattedElements;
                 std::smatch match;
 
-                // First, handle bold text
-                std::regex boldRegex("\\*\\*(.*?)\\*\\*");
-                while (std::regex_search(remainingLine, match, boldRegex)) {
-                    if (!match.prefix().str().empty()) {
-                        formattedElements.push_back(text(match.prefix().str()));
-                    }
-                    formattedElements.push_back(text(match.str(1) + "") | bold);
-                    remainingLine = match.suffix().str();
-                }
-
-                // Handle italic text within the remaining text
-                std::regex italicRegex("\\*(.*?)\\*");
-                while (std::regex_search(remainingLine, match, italicRegex)) {
-                    if (!match.prefix().str().empty()) {
-                        formattedElements.push_back(text(match.prefix().str()));
-                    }
-                    formattedElements.push_back(text(match.str(1)) | dim);
-                    remainingLine = match.suffix().str();
-                }
-
-                // Handle inline code
+                // Process inline code first
                 while (std::regex_search(remainingLine, match, inlineCodeRegex)) {
                     if (!match.prefix().str().empty()) {
-                        formattedElements.push_back(text(match.prefix().str()));
+                        formattedElements.push_back(ParseTextWithStyles(match.prefix().str()));
                     }
-                    formattedElements.push_back(text(match.str(1)) | bgcolor(Color::GrayDark) | color(Color::Black));
+                    formattedElements.push_back(text(match.str(1)) | bgcolor(Color::RGB(71, 71, 71)));
                     remainingLine = match.suffix().str();
                 }
 
-                // Add any remaining text after handling all special formatting
+                // Handle remaining text (which may contain bold/italic)
                 if (!remainingLine.empty()) {
-                    formattedElements.push_back(text(remainingLine));
+                    formattedElements.push_back(ParseTextWithStyles(remainingLine));
                 }
 
                 elements.push_back(hbox(formattedElements));
@@ -282,6 +266,39 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
     }
 
     return elements;
+}
+
+ftxui::Element Markdown::ParseTextWithStyles(const std::string& text) {
+    std::vector<Element> formattedElements;
+    std::smatch match;
+    std::string remainingText = text;
+    std::regex boldRegex("\\*\\*(.*?)\\*\\*");
+    std::regex italicRegex("\\*(.*?)\\*");
+
+    // Handle bold text
+    while (std::regex_search(remainingText, match, boldRegex)) {
+        if (!match.prefix().str().empty()) {
+            formattedElements.push_back(ParseTextWithStyles(match.prefix().str()));
+        }
+        formattedElements.push_back(ftxui::text(match.str(1)) | bold);
+        remainingText = match.suffix().str();
+    }
+
+    // Handle italic text within the remaining text
+    while (std::regex_search(remainingText, match, italicRegex)) {
+        if (!match.prefix().str().empty()) {
+            formattedElements.push_back(ftxui::text(match.prefix().str()));
+        }
+        formattedElements.push_back(ftxui::text(match.str(1)) | dim);
+        remainingText = match.suffix().str();
+    }
+
+    // Add any remaining text
+    if (!remainingText.empty()) {
+        formattedElements.push_back(ftxui::text(remainingText));
+    }
+
+    return hbox(formattedElements);
 }
 
 std::vector<Element> Markdown::RenderMarkdown() {
