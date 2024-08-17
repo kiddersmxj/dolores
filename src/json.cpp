@@ -1,4 +1,21 @@
 #include "../inc/json.hpp"
+#include <fstream>
+
+void appenddebugfile(const std::string& text) {
+    // Open the file in append mode (std::ios::app)
+    std::ofstream debugFile("debug", std::ios::app);
+
+    // Check if the file is open
+    if (debugFile.is_open()) {
+        // Write the string to the file
+        debugFile << text << std::endl;
+
+        // Close the file
+        debugFile.close();
+    } else {
+        std::cerr << "Unable to open the file 'debug'" << std::endl;
+    }
+}
 
 Json::Json(std::string system_content, std::string api_key) : api_key(api_key) {
     // Add the initial system message to the history
@@ -26,20 +43,26 @@ std::deque<Json::MessagePair> Json::parseMessages(const json& j) {
         std::string content = item.at("content").get<std::string>();
 
         if (role == USER) {
-            if (!current_user_message.empty() && !current_assistant_message.empty()) {
-                messagePairs.push_back({current_user_message, current_assistant_message});
+            if (!current_user_message.empty()) {
+                // If there's an existing user message without an assistant response, add it with an empty assistant message
+                messagePairs.push_back({current_user_message, ""});
                 current_user_message.clear();
-                current_assistant_message.clear();
             }
             current_user_message = content;
         } else if (role == ASSISTANT) {
             current_assistant_message = content;
+            // Add the pair immediately after an assistant message
+            if (!current_user_message.empty()) {
+                messagePairs.push_back({current_user_message, current_assistant_message});
+                current_user_message.clear();
+                current_assistant_message.clear();
+            }
         }
     }
 
-    // Add the last pair if available
-    if (!current_user_message.empty() && !current_assistant_message.empty()) {
-        messagePairs.push_back({current_user_message, current_assistant_message});
+    // Add the last user message if available, even if there's no assistant response --- important
+    if (!current_user_message.empty()) {
+        messagePairs.push_back({current_user_message, ""});
     }
 
     return messagePairs;
@@ -76,14 +99,13 @@ void Json::Add(std::string user_content, std::string role) {
         {"role", role},
         {"content", user_content}
     });
+
+    messagePairs = parseMessages(messages);
 }
 
 std::string Json::Send() {
     // Prepare the request payload with the message history
-    json request_payload = {
-        {"model", model},
-        {"messages", messages}
-    };
+    json request_payload = GetRequest();
 
     // Send the request and get the response
     return sendOpenAIRequest(api_key, request_payload.dump());
@@ -103,10 +125,7 @@ json Json::GetMessages() {
 
 std::string Json::Name() {
     // Create the NameRequest
-    json NameRequest = {
-        {"model", model},
-        {"messages", messages}
-    };
+    json NameRequest = GetRequest();
 
     // Add the user message
     NameRequest["messages"].push_back({

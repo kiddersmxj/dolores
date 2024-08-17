@@ -33,7 +33,7 @@ Database::Database() {
 
         // Process the sorted files
         for (const auto& fileData : files) {
-            jsonFileNames.push_back(fileData.filePath.filename().string());
+            jsonFileNames.push_back(fileData.filePath.stem().string());
             std::string Name = "";
 
             // Open the JSON file and parse it
@@ -111,7 +111,7 @@ json Database::ReadFile(std::string Name) {
     size_t index = std::distance(jsonNames.begin(), it);
 
     // Use the index to find the corresponding file name in jsonFileNames
-    std::string fileName = ChatArchiveDir + jsonFileNames[index];
+    std::string fileName = ChatArchiveDir + jsonFileNames[index] + ".json";
 
     // Read the file content
     std::ifstream fileStream(fileName);
@@ -147,7 +147,7 @@ json Database::ReadFile(int Index) {
     }
 
     // Get the file name using the index
-    std::string fileName = ChatArchiveDir + jsonFileNames[Index];
+    std::string fileName = ChatArchiveDir + jsonFileNames[Index] + ".json";
 
     // Read the file content
     std::ifstream fileStream(fileName);

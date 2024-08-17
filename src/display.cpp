@@ -3,6 +3,25 @@
 
 namespace fs = std::filesystem;
 
+void NewChat(std::string Content, Database Db) {
+    const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
+    if (!api_key) {
+        std::cerr << "Error: " << OPENAI_API_KEY_ENV_VAR << " environment variable not set." << std::endl;
+        return;
+    }
+
+    // Generate the chats UID
+    const std::string uid = Db.generateUID();
+    std::string Name = "";
+    int MessageIndex = 0;
+    std::string system_content = SYSTEMCONTENT;
+    // Add the initial system message to the history
+    Json Message(system_content, api_key);
+}
+
+void NewMessage(std::string Content) {
+}
+
 void appendDebugFile(const std::string& text) {
     // Open the file in append mode (std::ios::app)
     std::ofstream debugFile("debug", std::ios::app);
@@ -57,28 +76,21 @@ void Display::Show() {
 
     auto tab_selection = Menu(&tab_entries, &tab_index, MenuOption::VerticalAnimated()) | size(WIDTH, EQUAL, 25) | color(Color::RGB(153, 153, 153));
 
-    std::deque<Json> jsons;
+    std::deque<Json> AllMessages;
     long index = 0;
     for(auto File: Files) {
-        Json Json(Db.ReadFile(index), OPENAI_API_KEY_ENV_VAR);
-        jsons.push_back(Json);
+        Json Messages(Db.ReadFile(index), OPENAI_API_KEY_ENV_VAR);
+        // appendDebugFile(Db.ReadFile(index).dump());
+        AllMessages.push_back(Messages);
         index++;
     }
 
     // std::string tab_content_text = jsons.at(tab_index)
-    // k::WriteFileLines(tab_content_text, "tab_content.txt");
     std::string vim_content = GetVimContent("1234");
     std::string previous_vim_content = vim_content;
 
     int scroll_position = 0;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
-
-    // auto tab_content = Renderer([&] {
-    //     // Get terminal width minus the specified width
-    //     int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
-    //     Markdown Md(jsons.at(tab_index).GetMessagePairString(), max_line_width);
-    //     return vbox(Md.RenderMarkdown()) | yframe;
-    // });
 
     auto tab_content = Renderer([&] {
         // Reset scroll position if the tab has changed
@@ -97,10 +109,13 @@ void Display::Show() {
 
         std::deque<Pairs> Messages;
 
-        auto userMessages = jsons.at(tab_index).GetUserMessages();
-        auto assistantMessages = jsons.at(tab_index).GetAssistantMessages();
+        auto userMessages = AllMessages.at(tab_index).GetUserMessages();
+        for(auto M: userMessages)
+            appendDebugFile(M);
+        auto assistantMessages = AllMessages.at(tab_index).GetAssistantMessages();
 
-        size_t maxMessages = std::max(userMessages.size(), assistantMessages.size());
+        // size_t maxMessages = std::max(userMessages.size(), assistantMessages.size());
+        size_t maxMessages = userMessages.size();
 
         for (size_t i = 0; i < maxMessages; ++i) {
             std::vector<ftxui::Element> userElement;
@@ -141,6 +156,7 @@ void Display::Show() {
         // Return the view with yframe and the scroll position
         return vbox(ScrollElements) | yframe;
     });
+
     auto main_container = Container::Vertical({
         tab_selection,
         tab_content,
@@ -218,8 +234,12 @@ void Display::Show() {
             vim_content = GetVimContent("1234");
             if (vim_content != previous_vim_content && vim_content != "") {
                 previous_vim_content = vim_content;
-                // Update the tab content text when vim_content changes
-                // tab_content_text = vim_content;
+                AllMessages.at(tab_index).Add(vim_content, USER);
+                appendDebugFile(AllMessages.at(tab_index).GetRequest().dump(4));
+                // Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index));
+                auto userMessages = AllMessages.at(tab_index).GetUserMessages();
+                for(auto M: userMessages)
+                    appendDebugFile(std::to_string(tab_index) + ":" + M);
             }
 
             // Update the tab content based on tab_index
