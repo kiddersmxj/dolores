@@ -25,6 +25,8 @@ class Json {
         };
         std::deque<MessagePair> parseMessages(const json& j);
         std::string GetMessagePairString();
+        std::deque<std::string> GetUserMessages();
+        std::deque<std::string> GetAssistantMessages();
     private:
         std::string api_key;
         std::deque<json> messages;

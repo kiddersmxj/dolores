@@ -72,6 +72,11 @@ std::vector<std::string> Markdown::WrapText(const std::string& text, int maxWidt
     std::string currentLine;
     std::vector<std::string> wrappedLines;
 
+    if(text.empty()) {
+        wrappedLines.push_back(" ");
+        return wrappedLines;
+    }
+
     while (iss >> word) {
         if (currentLine.length() + word.length() + 1 > static_cast<size_t>(maxWidth)) {
             wrappedLines.push_back(currentLine);
@@ -157,16 +162,16 @@ ftxui::Element Markdown::ApplyFormatting(const std::string& line, const std::vec
 
     for (const auto& flag : flags) {
         if (flag == "Header1") {
-            element = text(" ") | bold | color(Color::Blue);
+            element = text(line) | bold | color(Color::Blue);
         } else if (flag == "Header2") {
-            element = text(" ") | bold | color(Color::Green);
+            element = text(line) | bold | color(Color::Green);
         } else if (flag == "Header3") {
-            element = text(" ") | bold | color(Color::Yellow);
+            element = text(line) | bold | color(Color::Yellow);
         } else if (flag == "CodeBlock") {
             element = hbox({
-                text("│"),
+                text("│") | color(Color::GrayDark),
                 text(line) | color(Color::Magenta),
-                text("│"),
+                text("│") | color(Color::GrayDark),
             });
         } else if (flag == "Bold") {
             element = text(line) | bold;
@@ -187,6 +192,7 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
     std::string codeLanguage;
 
     std::regex codeBlockRegex(R"(^\s*```.*)");  // Regex to match lines starting with optional spaces followed by ```
+    std::regex inlineCodeRegex("`([^`]*)`");    // Regex to match inline code sections
 
     for (const auto& line : lines) {
         std::vector<std::string> flags;
@@ -197,14 +203,13 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
                 codeLanguage = line.substr(line.find("```") + 3);  // Capture the language
                 flags.push_back("CodeBlock");
                 elements.push_back(text(codeLanguage + ":"));
-                elements.push_back(text(CreateTopBorder(maxWidth)));
+                elements.push_back(text(CreateTopBorder(maxWidth)) | color(Color::GrayDark));
             } else {
                 codeLanguage.clear();
-                elements.push_back(text(CreateBottomBorder(maxWidth)));
+                elements.push_back(text(CreateBottomBorder(maxWidth)) | color(Color::GrayDark));
             }
         } else if (inCodeBlock) {
             flags.push_back("CodeBlock");
-            // appendToDebugFile("[" + line + "]");
             auto wrappedLines = WrapCode(line, maxWidth);
             for (const auto& wrappedLine : wrappedLines) {
                 elements.push_back(ApplyFormatting(wrappedLine, flags));
@@ -227,8 +232,7 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
             for (const auto& wrappedLine : wrappedLines) {
                 elements.push_back(ApplyFormatting(wrappedLine, flags));
             }
-
-        } else if (line.find("**") != std::string::npos || line.find("*") != std::string::npos) {
+        } else if (line.find("**") != std::string::npos || line.find("*") != std::string::npos || std::regex_search(line, inlineCodeRegex)) {
             for(auto remainingLine: WrapText(line, maxWidth)) {
                 std::vector<Element> formattedElements;
                 std::smatch match;
@@ -243,29 +247,32 @@ std::vector<Element> Markdown::ParseMarkdownContent() {
                     remainingLine = match.suffix().str();
                 }
 
-                // Handle any remaining text after bold processing
-                if (!remainingLine.empty()) {
-                    std::string remainingForItalic = remainingLine;
-                    remainingLine.clear();  // Clear this to avoid duplication
-
-                    // Handle italic text within the remaining text
-                    std::regex italicRegex("\\*(.*?)\\*");
-                    while (std::regex_search(remainingForItalic, match, italicRegex)) {
-                        if (!match.prefix().str().empty()) {
-                            formattedElements.push_back(text(match.prefix().str()));
-                        }
-                        formattedElements.push_back(text(match.str(1)) | dim);
-                        remainingForItalic = match.suffix().str();
+                // Handle italic text within the remaining text
+                std::regex italicRegex("\\*(.*?)\\*");
+                while (std::regex_search(remainingLine, match, italicRegex)) {
+                    if (!match.prefix().str().empty()) {
+                        formattedElements.push_back(text(match.prefix().str()));
                     }
-
-                    // Add any remaining text after handling italic
-                    if (!remainingForItalic.empty()) {
-                        formattedElements.push_back(text(remainingForItalic));
-                    }
+                    formattedElements.push_back(text(match.str(1)) | dim);
+                    remainingLine = match.suffix().str();
                 }
+
+                // Handle inline code
+                while (std::regex_search(remainingLine, match, inlineCodeRegex)) {
+                    if (!match.prefix().str().empty()) {
+                        formattedElements.push_back(text(match.prefix().str()));
+                    }
+                    formattedElements.push_back(text(match.str(1)) | bgcolor(Color::GrayDark) | color(Color::Black));
+                    remainingLine = match.suffix().str();
+                }
+
+                // Add any remaining text after handling all special formatting
+                if (!remainingLine.empty()) {
+                    formattedElements.push_back(text(remainingLine));
+                }
+
                 elements.push_back(hbox(formattedElements));
             }
-
         } else {
             auto wrappedLines = WrapText(line, maxWidth);
             for (const auto& wrappedLine : wrappedLines) {

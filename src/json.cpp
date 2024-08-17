@@ -45,6 +45,22 @@ std::deque<Json::MessagePair> Json::parseMessages(const json& j) {
     return messagePairs;
 }
 
+std::deque<std::string> Json::GetUserMessages() {
+    std::deque<std::string> UserMessages;
+    for (const auto& pair : messagePairs) {
+        UserMessages.push_back(pair.user_message);
+    }
+    return UserMessages;
+}
+
+std::deque<std::string> Json::GetAssistantMessages() {
+    std::deque<std::string> AssistantMessages;
+    for (const auto& pair : messagePairs) {
+        AssistantMessages.push_back(pair.assistant_message);
+    }
+    return AssistantMessages;
+}
+
 std::string Json::GetMessagePairString() {
     std::stringstream ss;
     for (const auto& pair : messagePairs) {

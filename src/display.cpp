@@ -3,6 +3,22 @@
 
 namespace fs = std::filesystem;
 
+void appendDebugFile(const std::string& text) {
+    // Open the file in append mode (std::ios::app)
+    std::ofstream debugFile("debug", std::ios::app);
+
+    // Check if the file is open
+    if (debugFile.is_open()) {
+        // Write the string to the file
+        debugFile << text << std::endl;
+
+        // Close the file
+        debugFile.close();
+    } else {
+        std::cerr << "Unable to open the file 'debug'" << std::endl;
+    }
+}
+
 int OpenVim(std::string uid) {
     std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
     return k::ExecCmd("st -e vim " + filename + " > /dev/null 2>&1 &");
@@ -75,19 +91,60 @@ void Display::Show() {
         int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
 
         // Use the Markdown class with line wrapping handled natively
-        Markdown Md(jsons.at(tab_index).GetMessagePairString(), max_line_width);
+        // Markdown Md(jsons.at(tab_index).GetMessagePairString(), max_line_width);
+
+        struct Pairs {
+            std::vector<ftxui::Element> User;
+            std::vector<ftxui::Element> Assistant;
+        };
+
+        std::deque<Pairs> Messages;
+
+        auto userMessages = jsons.at(tab_index).GetUserMessages();
+        auto assistantMessages = jsons.at(tab_index).GetAssistantMessages();
+
+        size_t maxMessages = std::max(userMessages.size(), assistantMessages.size());
+
+        for (size_t i = 0; i < maxMessages; ++i) {
+            std::vector<ftxui::Element> userElement;
+            std::vector<ftxui::Element> assistantElement;
+            
+            if (i < userMessages.size()) {
+                Markdown UMd(userMessages[i], max_line_width);
+                userElement = UMd.RenderMarkdown();
+            }
+            
+            if (i < assistantMessages.size()) {
+                Markdown AMd(assistantMessages[i], max_line_width);
+                assistantElement = AMd.RenderMarkdown();
+            }
+            
+            Messages.push_back(Pairs{userElement, assistantElement});
+        }
 
         // Render the Markdown content into lines
-        auto rendered_lines = Md.RenderMarkdown();
+        // auto rendered_lines = Md.RenderMarkdown();
 
         // Create a view starting from the scroll position
         std::vector<Element> elements;
-        for (size_t i = scroll_position; i < rendered_lines.size(); ++i) {
-            elements.push_back(rendered_lines[i]);
+        for(auto Message: Messages) {
+            elements.push_back(separator() | color(Color::GrayDark));
+            for(auto M: Message.User)
+                elements.push_back(M);
+            elements.push_back(separator() | color(Color::GrayDark));
+            elements.push_back(text(" "));
+            for(auto M: Message.Assistant)
+                elements.push_back(M);
+            elements.push_back(text(" "));
+        }
+
+        std::vector<Element> ScrollElements;
+        for (size_t i = scroll_position; i < elements.size(); ++i) {
+            ScrollElements.push_back(elements[i]);
         }
 
         // Return the view with yframe and the scroll position
-        return vbox(elements) | yframe;
+        return vbox(ScrollElements) | yframe;
     });
 
     // auto tab_content = Renderer([&] {
