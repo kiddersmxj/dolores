@@ -90,9 +90,6 @@ void Display::Show() {
         // Get terminal width minus the specified width
         int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
 
-        // Use the Markdown class with line wrapping handled natively
-        // Markdown Md(jsons.at(tab_index).GetMessagePairString(), max_line_width);
-
         struct Pairs {
             std::vector<ftxui::Element> User;
             std::vector<ftxui::Element> Assistant;
@@ -123,9 +120,6 @@ void Display::Show() {
         }
 
         // Render the Markdown content into lines
-        // auto rendered_lines = Md.RenderMarkdown();
-
-        // Create a view starting from the scroll position
         std::vector<Element> elements;
         for(auto Message: Messages) {
             elements.push_back(separator() | color(Color::GrayDark));
@@ -138,6 +132,7 @@ void Display::Show() {
             elements.push_back(text(" "));
         }
 
+        // Create a view starting from the scroll position
         std::vector<Element> ScrollElements;
         for (size_t i = scroll_position; i < elements.size(); ++i) {
             ScrollElements.push_back(elements[i]);
@@ -146,59 +141,6 @@ void Display::Show() {
         // Return the view with yframe and the scroll position
         return vbox(ScrollElements) | yframe;
     });
-
-    // auto tab_content = Renderer([&] {
-    //     if(tab_index != previous_tab_index) {
-    //         scroll_position = 0;
-    //         previous_tab_index = tab_index;
-    //     }
-    //     // Split the text content by lines
-    //     std::vector<std::string> lines;
-    //     std::string Text = jsons.at(tab_index).GetMessagePairString();
-    //     std::istringstream iss(Text);
-    //     std::string line;
-        
-    //     // Store the wrapped lines
-    //     std::vector<std::string> wrapped_lines;
-        
-    //     // Get terminal width minus the specified width
-    //     int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
-
-    //     // Wrap lines if they exceed the maximum line width without breaking words
-    //     while (std::getline(iss, line)) {
-    //         std::string current_line;
-    //         std::istringstream word_stream(line);
-    //         std::string word;
-            
-    //         while (word_stream >> word) {
-    //             // If adding the next word exceeds the max width, push the current line and start a new one
-    //             if (current_line.length() + word.length() + 1 > static_cast<size_t>(max_line_width)) {
-    //                 wrapped_lines.push_back(current_line);
-    //                 current_line.clear();
-    //             }
-
-    //             // Add the word to the current line
-    //             if (!current_line.empty()) {
-    //                 current_line += " ";
-    //             }
-    //             current_line += word;
-    //         }
-
-    //         // Add any remaining part of the line
-    //         if (!current_line.empty()) {
-    //             wrapped_lines.push_back(current_line);
-    //         }
-    //     }
-
-    //     // Create a view starting from the scroll position
-    //     std::vector<Element> elements;
-    //     for (size_t i = scroll_position; i < wrapped_lines.size(); ++i) {
-    //         elements.push_back(text(wrapped_lines[i]));
-    //     }
-
-    //     return vbox(elements) | yframe;
-    // });
-
     auto main_container = Container::Vertical({
         tab_selection,
         tab_content,
