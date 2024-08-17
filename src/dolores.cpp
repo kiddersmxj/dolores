@@ -24,6 +24,26 @@ std::string GetInput() {
     return user_content;
 }
 
+void outputMarkdownWithGlow(const std::string& markdownText) {
+    char command[256];           // Adjust the size of the buffer as needed
+    // Format the command string
+    sprintf(command, "glow --style=%s", getenv(GlowStylesheet.c_str()));
+
+    // Open a process to run the `glow` command
+    FILE* pipe = popen(command, "w");
+    // FILE* pipe = popen("glow --style=dark", "w");
+    if (!pipe) {
+        std::cerr << "Could not start glow.\n";
+        return;
+    }
+
+    // Write the markdown text to the `glow` process
+    fprintf(pipe, "%s", markdownText.c_str());
+
+    // Close the process after writing
+    pclose(pipe);
+}
+
 int main(int argc, char** argv) {
     int HelpFlag = 0;
     int VersionFlag = 0;
@@ -123,7 +143,7 @@ int main(int argc, char** argv) {
                 Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
                 // Output the assistant's response with Markdown formatting
-                /* outputMarkdownWithGlow(assistant_reply); */
+                outputMarkdownWithGlow(assistant_reply);
 
                 MessageIndex++;
             }
