@@ -1,6 +1,6 @@
 #include "config.hpp"
 #include "database.hpp"
-#include "json.hpp"
+#include "messages.hpp"
 #include "markdown.hpp"
 
 #include <stddef.h>    // for size_t

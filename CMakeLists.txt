@@ -90,7 +90,7 @@ target_sources(dolores
     PRIVATE src/markdown.cpp
     PRIVATE src/display.cpp
     PRIVATE src/database.cpp
-    PRIVATE src/json.cpp
+    PRIVATE src/messages.cpp
 )
 
 # Copyright (c) 2024, Maxamilian Kidd-May

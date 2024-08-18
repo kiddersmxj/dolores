@@ -1,4 +1,4 @@
-#include "../inc/json.hpp"
+#include "../inc/messages.hpp"
 #include <fstream>
 
 void appenddebugfile(const std::string& text) {
@@ -19,13 +19,11 @@ void appenddebugfile(const std::string& text) {
 
 Messages::Messages(std::string system_content, std::string api_key, bool NewChat) 
     : NewChat(NewChat), api_key(api_key) {
-    k::BreakPoint();
     messages.push_back({
         {"role", "system"},
         {"content", system_content}
     });
     messagePairs = parseMessages(messages);
-    k::BreakPoint();
 }
 
 Messages::Messages(json messages, std::string api_key) : api_key(api_key), messages(messages) {
