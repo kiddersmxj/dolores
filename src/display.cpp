@@ -19,9 +19,6 @@ void NewChat(std::string Content, Database Db) {
     Json Message(system_content, api_key);
 }
 
-void NewMessage(std::string Content) {
-}
-
 void prependDebugFile(const std::string& text) {
     // Read the existing content of the file
     std::ifstream debugFileIn("debug");
@@ -117,6 +114,8 @@ void Display::Show() {
     int scroll_position = -1;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
 
+    Box box; // This will hold the size of the rendered element
+
     auto tab_content = Renderer([&] {
         // Reset scroll position if the tab has changed
         if (tab_index != previous_tab_index) {
@@ -124,8 +123,16 @@ void Display::Show() {
             previous_tab_index = tab_index;
         }
 
+        int max_line_width;
+        int visible_height;
         // Get terminal width minus the specified width
-        int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
+        if(scroll_position == -1) {
+            max_line_width = (box.x_max > box.x_min) ? (box.x_max - box.x_min) : Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
+            visible_height = (box.y_max > box.y_min) ? (box.y_max - box.y_min) : Terminal::Size().dimy - 3;
+        } else {
+            max_line_width = box.x_max - box.x_min;
+            visible_height = box.y_max - box.y_min;
+        }
 
         struct Pairs {
             std::deque<ftxui::Element> User;
@@ -135,57 +142,58 @@ void Display::Show() {
         std::deque<Pairs> Messages;
 
         auto userMessages = AllMessages.at(tab_index).GetUserMessages();
-        // for(auto M: userMessages)
-        //     appendDebugFile(M);
         auto assistantMessages = AllMessages.at(tab_index).GetAssistantMessages();
 
-        // size_t maxMessages = std::max(userMessages.size(), assistantMessages.size());
         size_t maxMessages = userMessages.size();
 
         for (size_t i = 0; i < maxMessages; ++i) {
             std::deque<ftxui::Element> userElement;
             std::deque<ftxui::Element> assistantElement;
-            
+
             if (i < userMessages.size()) {
                 Markdown UMd(userMessages[i], max_line_width);
                 userElement = UMd.RenderMarkdown();
             }
-            
+
             if (i < assistantMessages.size()) {
                 Markdown AMd(assistantMessages[i], max_line_width);
                 assistantElement = AMd.RenderMarkdown();
             }
-            
+
             Messages.push_back(Pairs{userElement, assistantElement});
         }
 
-        // Render the Markdown content into lines
         std::deque<Element> elements;
-        for(auto Message: Messages) {
+        for (auto it = Messages.begin(); it != Messages.end(); ++it) {
+            auto& Message = *it;
+            
             elements.push_back(separator() | color(Color::GrayDark));
-            for(auto M: Message.User)
+            
+            for (auto& M : Message.User)
                 elements.push_back(M);
+            
             elements.push_back(separator() | color(Color::GrayDark));
+            
             elements.push_back(text(" "));
-            for(auto M: Message.Assistant)
+            
+            for (auto& M : Message.Assistant)
                 elements.push_back(M);
-            elements.push_back(text(" "));
+            
+            // Only add the trailing space if it's not the last message
+            if (std::next(it) != Messages.end()) {
+                elements.push_back(text(" "));
+            }
         }
-
-        // Calculate the visible height
-        size_t visible_height = Terminal::Size().dimy - 3; // Subtract 2 to allow for frame padding
 
         size_t OriginalSize = elements.size();
         while(elements.size() < visible_height) {
             elements.push_front(text(" "));
         }
 
-        // Ensure the scroll position starts from the bottom if elements are more than visible height
         if (scroll_position == -1) {
             scroll_position = elements.size() > visible_height ? elements.size() - visible_height : 0;
         }
 
-        // Ensure that scroll_position is within valid bounds
         if (scroll_position < 0) {
             scroll_position = 0;
         } else if(OriginalSize < visible_height) {
@@ -198,14 +206,13 @@ void Display::Show() {
             }
         }
 
-        // Create a view starting from the scroll position
         std::vector<Element> ScrollElements;
         for (size_t i = scroll_position; i < elements.size(); ++i) {
             ScrollElements.push_back(elements[i]);
         }
 
-        // Return the view with yframe to enable scrolling
-        return vbox(ScrollElements) | yframe;
+        auto rendered_content = vbox(ScrollElements) | yframe;
+        return rendered_content | reflect(box); // Correct usage
     });
 
     auto main_container = Container::Vertical({
@@ -287,13 +294,11 @@ void Display::Show() {
                 int ti = tab_index;
                 previous_vim_content = vim_content;
                 AllMessages.at(ti).Add(vim_content, USER);
-                prependDebugFile(AllMessages.at(ti).GetRequest().dump(4));
                 Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
 
                 // Handle the send operation asynchronously
                 auto future_response = std::async(std::launch::async, [&]() {
                     auto response = AllMessages.at(ti).Send();
-                    prependDebugFile("Send operation completed. Response: " + response); // Debug
                     return response;
                 });
 
@@ -301,21 +306,16 @@ void Display::Show() {
                 std::thread([&, future_response = std::move(future_response)]() mutable {
                     auto response = future_response.get(); // Wait for send to complete and get the result
                     if (!response.empty()) {
-                        prependDebugFile("Response received: " + response); // Debug
                         AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
                         Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
 
                         auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
-                        for (auto M : assistantMessages)
-                            prependDebugFile(std::to_string(ti) + ": Assistant Message - " + M);
                     } else {
                         prependDebugFile("Empty response received."); // Debug
                     }
                 }).detach();
 
                 auto userMessages = AllMessages.at(ti).GetUserMessages();
-                for (auto M : userMessages)
-                    prependDebugFile(std::to_string(ti) + ": User Message - " + M);
             }
 
             // Update the tab content based on ti
