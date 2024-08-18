@@ -90,7 +90,6 @@ void Display::Show() {
 
     int tab_index = 0;
     std::vector<std::string> tab_entries;
-
     tab_entries = Db.GetNames();
     std::vector<std::string> Files = Db.GetFileNames();
 
@@ -163,6 +162,7 @@ void Display::Show() {
             Messages.push_back(Pairs{userElement, assistantElement});
         }
 
+        // Join user and assistant messages
         std::deque<Element> elements;
         for (auto it = Messages.begin(); it != Messages.end(); ++it) {
             auto& Message = *it;

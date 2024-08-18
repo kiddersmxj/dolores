@@ -23,7 +23,14 @@ Database::Database() {
             if (entry.is_regular_file() && entry.path().extension() == ".json") {
                 FileData fileData;
                 fileData.filePath = entry.path();
-                fileData.lastModified = fs::last_write_time(entry).time_since_epoch().count();
+                // Check if the file is "New Chat" or "0000000000.json"
+                if (fileData.filePath.stem() == "New Chat" || fileData.filePath.stem() == "0000000000") {
+                    // Assign current time to ensure it is placed at the beginning
+                    fileData.lastModified = std::chrono::system_clock::now().time_since_epoch().count();
+                } else {
+                    // Use the actual last modified time
+                    fileData.lastModified = fs::last_write_time(entry).time_since_epoch().count();
+                }
                 files.push_back(fileData);
             }
         }

@@ -10,6 +10,7 @@ using json = nlohmann::json;
 
 class Json {
     public:
+        Json(std::string system_content, std::string api_key, std::string Name);
         Json(std::string system_content, std::string api_key);
         Json(json messages, std::string api_key);
         ~Json();
@@ -17,7 +18,7 @@ class Json {
         std::string Send();
         json GetRequest();
         json GetMessages();
-        std::string Name();
+        std::string MakeName();
         std::string ParseResponse(const std::string& response);
         struct MessagePair {
             std::string user_message;
@@ -28,6 +29,7 @@ class Json {
         std::deque<std::string> GetUserMessages();
         std::deque<std::string> GetAssistantMessages();
     private:
+        std::string Name;
         std::string api_key;
         std::deque<json> messages;
         std::deque<Json::MessagePair> messagePairs;

@@ -17,6 +17,10 @@ void appenddebugfile(const std::string& text) {
     }
 }
 
+Json::Json(std::string system_content, std::string api_key, std::string Name) 
+    : Name(Name), api_key(api_key) {
+}
+
 Json::Json(std::string system_content, std::string api_key) : api_key(api_key) {
     // Add the initial system message to the history
     messages.push_back({
@@ -123,7 +127,7 @@ json Json::GetMessages() {
     return messages;
 }
 
-std::string Json::Name() {
+std::string Json::MakeName() {
     // Create the NameRequest
     json NameRequest = GetRequest();
 

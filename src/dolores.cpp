@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
 
             /* if(MessageIndex % 5 == 0) */
             if(MessageIndex == 0) {
-                Name = Message.Name();
+                Name = Message.MakeName();
             }
 
             // Save the JSON data to a file
