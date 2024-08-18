@@ -104,14 +104,17 @@ int main(int argc, char** argv) {
             std::cerr << "Error: " << OPENAI_API_KEY_ENV_VAR << " environment variable not set." << std::endl;
             return EXIT_FAILURE;
         }
+            std::cout << 0.1 << std::endl;
 
         // Generate the chats UID
         const std::string uid = Db.generateUID();
+            std::cout << 0.2 << std::endl;
         std::string Name = "";
         int MessageIndex = 0;
         std::string system_content = SYSTEMCONTENT;
         // Add the initial system message to the history
-        Json Message(system_content, api_key);
+        Messages Message(system_content, api_key);
+        Db.ReadFile(1);
 
         // Interactive loop for repeated user input
         while (true) {

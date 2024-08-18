@@ -1,5 +1,5 @@
-#ifndef K_JSON_DOLORES
-#define K_JSON_DOLORES
+#ifndef K_MESSAGES_DOLORES
+#define K_MESSAGES_DOLORES
 
 #include "config.hpp"
 #include "curl.hpp"
@@ -8,12 +8,11 @@
 
 using json = nlohmann::json;
 
-class Json {
+class Messages {
     public:
-        Json(std::string system_content, std::string api_key, std::string Name);
-        Json(std::string system_content, std::string api_key);
-        Json(json messages, std::string api_key);
-        ~Json();
+        Messages(std::string system_content, std::string api_key, bool NewChat);
+        Messages(json messages, std::string api_key);
+        ~Messages();
         void Add(std::string user_content, std::string role);
         std::string Send();
         json GetRequest();
@@ -29,14 +28,11 @@ class Json {
         std::deque<std::string> GetUserMessages();
         std::deque<std::string> GetAssistantMessages();
     private:
-        std::string Name;
+        bool NewChat;
         std::string api_key;
         std::deque<json> messages;
-        std::deque<Json::MessagePair> messagePairs;
+        std::deque<Messages::MessagePair> messagePairs;
 };
-
-std::string GetName(std::deque<json> message_history, std::string model, \
-        std::string system_content, std::string user_content, std::string api_key);
 
 // Copyright (c) 2024, Maxamilian Kidd-May
 // All rights reserved.

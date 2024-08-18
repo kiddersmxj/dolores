@@ -1,5 +1,29 @@
 #include "../inc/database.hpp"
 
+void PrependDebugFile(const std::string& text) {
+    // Read the existing content of the file
+    std::ifstream debugFileIn("debug");
+    std::stringstream buffer;
+    buffer << debugFileIn.rdbuf();
+    std::string oldContent = buffer.str();
+    debugFileIn.close();
+
+    // Open the file in truncate mode to overwrite it
+    std::ofstream debugFileOut("debug", std::ios::trunc);
+
+    // Check if the file is open
+    if (debugFileOut.is_open()) {
+        // Write the new text followed by the old content
+        debugFileOut << text << std::endl << oldContent;
+
+        // Close the file
+        debugFileOut.close();
+    } else {
+        std::cerr << "Unable to open the file 'debug'" << std::endl;
+    }
+}
+
+
 Database::Database() {
     // Check if the directory exists, and create it if it doesn't
     try {

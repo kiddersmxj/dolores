@@ -3,22 +3,6 @@
 
 namespace fs = std::filesystem;
 
-void NewChat(std::string Content, Database Db) {
-    const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
-    if (!api_key) {
-        std::cerr << "Error: " << OPENAI_API_KEY_ENV_VAR << " environment variable not set." << std::endl;
-        return;
-    }
-
-    // Generate the chats UID
-    const std::string uid = Db.generateUID();
-    std::string Name = "";
-    int MessageIndex = 0;
-    std::string system_content = SYSTEMCONTENT;
-    // Add the initial system message to the history
-    Json Message(system_content, api_key);
-}
-
 void prependDebugFile(const std::string& text) {
     // Read the existing content of the file
     std::ifstream debugFileIn("debug");
@@ -95,14 +79,18 @@ void Display::Show() {
 
     auto tab_selection = Menu(&tab_entries, &tab_index, MenuOption::VerticalAnimated()) | size(WIDTH, EQUAL, 25) | color(Color::RGB(153, 153, 153));
 
-    std::deque<Json> AllMessages;
+    std::deque<Messages> AllMessages;
     long index = 0;
     // Get the API key from the environment variable
     const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
     for(auto File: Files) {
-        Json Messages(Db.ReadFile(index), api_key);
-        // appendDebugFile(Db.ReadFile(index).dump());
-        AllMessages.push_back(Messages);
+        if(tab_entries.at(index) == "New Chat") {
+            Messages Messages(SYSTEMCONTENT, api_key, 1);
+            AllMessages.push_back(Messages);
+        } else {
+            Messages Messages(Db.ReadFile(index), api_key);
+            AllMessages.push_back(Messages);
+        }
         index++;
     }
 

@@ -17,27 +17,25 @@ void appenddebugfile(const std::string& text) {
     }
 }
 
-Json::Json(std::string system_content, std::string api_key, std::string Name) 
-    : Name(Name), api_key(api_key) {
-}
-
-Json::Json(std::string system_content, std::string api_key) : api_key(api_key) {
-    // Add the initial system message to the history
+Messages::Messages(std::string system_content, std::string api_key, bool NewChat) 
+    : NewChat(NewChat), api_key(api_key) {
+    k::BreakPoint();
     messages.push_back({
         {"role", "system"},
         {"content", system_content}
     });
     messagePairs = parseMessages(messages);
+    k::BreakPoint();
 }
 
-Json::Json(json messages, std::string api_key) : api_key(api_key), messages(messages) {
+Messages::Messages(json messages, std::string api_key) : api_key(api_key), messages(messages) {
     messagePairs = parseMessages(messages);
 }
 
-Json::~Json() {
+Messages::~Messages() {
 }
 
-std::deque<Json::MessagePair> Json::parseMessages(const json& j) {
+std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     std::deque<MessagePair> messagePairs;
     std::string current_user_message;
     std::string current_assistant_message;
@@ -72,7 +70,7 @@ std::deque<Json::MessagePair> Json::parseMessages(const json& j) {
     return messagePairs;
 }
 
-std::deque<std::string> Json::GetUserMessages() {
+std::deque<std::string> Messages::GetUserMessages() {
     std::deque<std::string> UserMessages;
     for (const auto& pair : messagePairs) {
         UserMessages.push_back(pair.user_message);
@@ -80,7 +78,7 @@ std::deque<std::string> Json::GetUserMessages() {
     return UserMessages;
 }
 
-std::deque<std::string> Json::GetAssistantMessages() {
+std::deque<std::string> Messages::GetAssistantMessages() {
     std::deque<std::string> AssistantMessages;
     for (const auto& pair : messagePairs) {
         AssistantMessages.push_back(pair.assistant_message);
@@ -88,7 +86,7 @@ std::deque<std::string> Json::GetAssistantMessages() {
     return AssistantMessages;
 }
 
-std::string Json::GetMessagePairString() {
+std::string Messages::GetMessagePairString() {
     std::stringstream ss;
     for (const auto& pair : messagePairs) {
         ss << pair.user_message << "\n";
@@ -97,7 +95,7 @@ std::string Json::GetMessagePairString() {
     return ss.str();
 }
 
-void Json::Add(std::string user_content, std::string role) {
+void Messages::Add(std::string user_content, std::string role) {
     // Add user's message to the history
     messages.push_back({
         {"role", role},
@@ -107,7 +105,7 @@ void Json::Add(std::string user_content, std::string role) {
     messagePairs = parseMessages(messages);
 }
 
-std::string Json::Send() {
+std::string Messages::Send() {
     // Prepare the request payload with the message history
     json request_payload = GetRequest();
 
@@ -115,7 +113,7 @@ std::string Json::Send() {
     return sendOpenAIRequest(api_key, request_payload.dump());
 }
 
-json Json::GetRequest() {
+json Messages::GetRequest() {
     json request_payload = {
         {"model", model},
         {"messages", messages}
@@ -123,11 +121,11 @@ json Json::GetRequest() {
     return request_payload;
 }
 
-json Json::GetMessages() {
+json Messages::GetMessages() {
     return messages;
 }
 
-std::string Json::MakeName() {
+std::string Messages::MakeName() {
     // Create the NameRequest
     json NameRequest = GetRequest();
 
@@ -141,7 +139,7 @@ std::string Json::MakeName() {
 }
 
 // Function to parse the JSON response and return the assistant's response content
-std::string Json::ParseResponse(const std::string& response) {
+std::string Messages::ParseResponse(const std::string& response) {
     try {
         json jsonResponse = json::parse(response);
 
