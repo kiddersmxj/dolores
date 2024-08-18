@@ -221,7 +221,7 @@ void Display::Show() {
                         tab_content->Render() | flex,
                     }) | flex,
                     separator() | color(Color::RGB(153, 153, 153)),
-                    paragraph(vim_content) | size(ftxui::HEIGHT, EQUAL, 2),
+                    paragraph(vim_content),
                 }) | flex,
             }) | flex
         });
