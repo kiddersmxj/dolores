@@ -284,14 +284,15 @@ void Display::Show() {
 
             vim_content = GetVimContent("1234");
             if (vim_content != previous_vim_content && vim_content != "") {
+                int ti = tab_index;
                 previous_vim_content = vim_content;
-                AllMessages.at(tab_index).Add(vim_content, USER);
-                prependDebugFile(AllMessages.at(tab_index).GetRequest().dump(4));
-                Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index));
+                AllMessages.at(ti).Add(vim_content, USER);
+                prependDebugFile(AllMessages.at(ti).GetRequest().dump(4));
+                Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
 
                 // Handle the send operation asynchronously
                 auto future_response = std::async(std::launch::async, [&]() {
-                    auto response = AllMessages.at(tab_index).Send();
+                    auto response = AllMessages.at(ti).Send();
                     prependDebugFile("Send operation completed. Response: " + response); // Debug
                     return response;
                 });
@@ -301,24 +302,24 @@ void Display::Show() {
                     auto response = future_response.get(); // Wait for send to complete and get the result
                     if (!response.empty()) {
                         prependDebugFile("Response received: " + response); // Debug
-                        AllMessages.at(tab_index).Add(AllMessages.at(tab_index).ParseResponse(response), ASSISTANT);
-                        Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index));
+                        AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
+                        Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
 
-                        auto assistantMessages = AllMessages.at(tab_index).GetAssistantMessages();
+                        auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
                         for (auto M : assistantMessages)
-                            prependDebugFile(std::to_string(tab_index) + ": Assistant Message - " + M);
+                            prependDebugFile(std::to_string(ti) + ": Assistant Message - " + M);
                     } else {
                         prependDebugFile("Empty response received."); // Debug
                     }
                 }).detach();
 
-                auto userMessages = AllMessages.at(tab_index).GetUserMessages();
+                auto userMessages = AllMessages.at(ti).GetUserMessages();
                 for (auto M : userMessages)
-                    prependDebugFile(std::to_string(tab_index) + ": User Message - " + M);
+                    prependDebugFile(std::to_string(ti) + ": User Message - " + M);
             }
 
-            // Update the tab content based on tab_index
-            // tab_content_text = Db.ReadFile(tab_index).dump(4);
+            // Update the tab content based on ti
+            // tab_content_text = Db.ReadFile(ti).dump(4);
 
             screen.Post([&] {
                 screen.Post(Event::Custom); 
