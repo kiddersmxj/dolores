@@ -101,8 +101,10 @@ void Display::Show() {
 
     std::deque<Json> AllMessages;
     long index = 0;
+    // Get the API key from the environment variable
+    const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
     for(auto File: Files) {
-        Json Messages(Db.ReadFile(index), OPENAI_API_KEY_ENV_VAR);
+        Json Messages(Db.ReadFile(index), api_key);
         // appendDebugFile(Db.ReadFile(index).dump());
         AllMessages.push_back(Messages);
         index++;
@@ -284,11 +286,35 @@ void Display::Show() {
             if (vim_content != previous_vim_content && vim_content != "") {
                 previous_vim_content = vim_content;
                 AllMessages.at(tab_index).Add(vim_content, USER);
-                appendDebugFile(AllMessages.at(tab_index).GetRequest().dump(4));
-                // Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index));
+                prependDebugFile(AllMessages.at(tab_index).GetRequest().dump(4));
+                Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index));
+
+                // Handle the send operation asynchronously
+                auto future_response = std::async(std::launch::async, [&]() {
+                    auto response = AllMessages.at(tab_index).Send();
+                    prependDebugFile("Send operation completed. Response: " + response); // Debug
+                    return response;
+                });
+
+                // Detach the future handling to allow the UI to refresh
+                std::thread([&, future_response = std::move(future_response)]() mutable {
+                    auto response = future_response.get(); // Wait for send to complete and get the result
+                    if (!response.empty()) {
+                        prependDebugFile("Response received: " + response); // Debug
+                        AllMessages.at(tab_index).Add(AllMessages.at(tab_index).ParseResponse(response), ASSISTANT);
+                        Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index));
+
+                        auto assistantMessages = AllMessages.at(tab_index).GetAssistantMessages();
+                        for (auto M : assistantMessages)
+                            prependDebugFile(std::to_string(tab_index) + ": Assistant Message - " + M);
+                    } else {
+                        prependDebugFile("Empty response received."); // Debug
+                    }
+                }).detach();
+
                 auto userMessages = AllMessages.at(tab_index).GetUserMessages();
-                for(auto M: userMessages)
-                    appendDebugFile(std::to_string(tab_index) + ":" + M);
+                for (auto M : userMessages)
+                    prependDebugFile(std::to_string(tab_index) + ": User Message - " + M);
             }
 
             // Update the tab content based on tab_index

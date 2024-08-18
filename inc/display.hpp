@@ -29,6 +29,7 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
+#include <future>
 
 using json = nlohmann::json;
 using namespace ftxui;
