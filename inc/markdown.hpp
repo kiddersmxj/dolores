@@ -9,13 +9,13 @@
 class Markdown {
     public:
         Markdown(const std::string& markdownContent, int maxWidth = 80);
-        std::vector<ftxui::Element> RenderMarkdown();
+        std::deque<ftxui::Element> RenderMarkdown();
 
     private:
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::vector<std::string> WrapText(const std::string& text, int maxWidth);
         std::vector<std::string> WrapCode(const std::string& text, int maxWidth);
-        std::vector<ftxui::Element> ParseMarkdownContent();
+        std::deque<ftxui::Element> ParseMarkdownContent();
         ftxui::Element ApplyFormatting(const std::string& line, const std::vector<std::string>& flags);
         ftxui::Element ParseTextWithStyles(const std::string& text);
         bool StartsWith(const std::string& str, const std::string& prefix);

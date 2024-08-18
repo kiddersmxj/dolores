@@ -185,8 +185,8 @@ ftxui::Element Markdown::ApplyFormatting(const std::string& line, const std::vec
     return element;
 }
 
-std::vector<Element> Markdown::ParseMarkdownContent() {
-    std::vector<Element> elements;
+std::deque<Element> Markdown::ParseMarkdownContent() {
+    std::deque<Element> elements;
     auto lines = SplitString(markdownContent, '\n');
     bool inCodeBlock = false;
     std::string codeLanguage;
@@ -301,7 +301,7 @@ ftxui::Element Markdown::ParseTextWithStyles(const std::string& text) {
     return hbox(formattedElements);
 }
 
-std::vector<Element> Markdown::RenderMarkdown() {
+std::deque<Element> Markdown::RenderMarkdown() {
     return ParseMarkdownContent();
 }
 

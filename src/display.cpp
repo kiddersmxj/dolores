@@ -22,6 +22,29 @@ void NewChat(std::string Content, Database Db) {
 void NewMessage(std::string Content) {
 }
 
+void prependDebugFile(const std::string& text) {
+    // Read the existing content of the file
+    std::ifstream debugFileIn("debug");
+    std::stringstream buffer;
+    buffer << debugFileIn.rdbuf();
+    std::string oldContent = buffer.str();
+    debugFileIn.close();
+
+    // Open the file in truncate mode to overwrite it
+    std::ofstream debugFileOut("debug", std::ios::trunc);
+
+    // Check if the file is open
+    if (debugFileOut.is_open()) {
+        // Write the new text followed by the old content
+        debugFileOut << text << std::endl << oldContent;
+
+        // Close the file
+        debugFileOut.close();
+    } else {
+        std::cerr << "Unable to open the file 'debug'" << std::endl;
+    }
+}
+
 void appendDebugFile(const std::string& text) {
     // Open the file in append mode (std::ios::app)
     std::ofstream debugFile("debug", std::ios::app);
@@ -89,13 +112,13 @@ void Display::Show() {
     std::string vim_content = GetVimContent("1234");
     std::string previous_vim_content = vim_content;
 
-    int scroll_position = 0;  // Variable to track the scroll position
+    int scroll_position = -1;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
 
     auto tab_content = Renderer([&] {
         // Reset scroll position if the tab has changed
         if (tab_index != previous_tab_index) {
-            scroll_position = 0;
+            scroll_position = -1;
             previous_tab_index = tab_index;
         }
 
@@ -103,23 +126,23 @@ void Display::Show() {
         int max_line_width = Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
 
         struct Pairs {
-            std::vector<ftxui::Element> User;
-            std::vector<ftxui::Element> Assistant;
+            std::deque<ftxui::Element> User;
+            std::deque<ftxui::Element> Assistant;
         };
 
         std::deque<Pairs> Messages;
 
         auto userMessages = AllMessages.at(tab_index).GetUserMessages();
-        for(auto M: userMessages)
-            appendDebugFile(M);
+        // for(auto M: userMessages)
+        //     appendDebugFile(M);
         auto assistantMessages = AllMessages.at(tab_index).GetAssistantMessages();
 
         // size_t maxMessages = std::max(userMessages.size(), assistantMessages.size());
         size_t maxMessages = userMessages.size();
 
         for (size_t i = 0; i < maxMessages; ++i) {
-            std::vector<ftxui::Element> userElement;
-            std::vector<ftxui::Element> assistantElement;
+            std::deque<ftxui::Element> userElement;
+            std::deque<ftxui::Element> assistantElement;
             
             if (i < userMessages.size()) {
                 Markdown UMd(userMessages[i], max_line_width);
@@ -135,7 +158,7 @@ void Display::Show() {
         }
 
         // Render the Markdown content into lines
-        std::vector<Element> elements;
+        std::deque<Element> elements;
         for(auto Message: Messages) {
             elements.push_back(separator() | color(Color::GrayDark));
             for(auto M: Message.User)
@@ -147,13 +170,39 @@ void Display::Show() {
             elements.push_back(text(" "));
         }
 
+        // Calculate the visible height
+        size_t visible_height = Terminal::Size().dimy - 3; // Subtract 2 to allow for frame padding
+
+        size_t OriginalSize = elements.size();
+        while(elements.size() < visible_height) {
+            elements.push_front(text(" "));
+        }
+
+        // Ensure the scroll position starts from the bottom if elements are more than visible height
+        if (scroll_position == -1) {
+            scroll_position = elements.size() > visible_height ? elements.size() - visible_height : 0;
+        }
+
+        // Ensure that scroll_position is within valid bounds
+        if (scroll_position < 0) {
+            scroll_position = 0;
+        } else if(OriginalSize < visible_height) {
+            scroll_position = 0;
+        } else if(scroll_position > OriginalSize) {
+            scroll_position = OriginalSize;
+        } else if(elements.size() > visible_height) {
+            if (scroll_position >= elements.size() - visible_height) {
+                scroll_position = elements.size() > 0 ? elements.size() - visible_height : 0;
+            }
+        }
+
         // Create a view starting from the scroll position
         std::vector<Element> ScrollElements;
         for (size_t i = scroll_position; i < elements.size(); ++i) {
             ScrollElements.push_back(elements[i]);
         }
 
-        // Return the view with yframe and the scroll position
+        // Return the view with yframe to enable scrolling
         return vbox(ScrollElements) | yframe;
     });
 
