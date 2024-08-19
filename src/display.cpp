@@ -62,6 +62,18 @@ std::string GetVimContent(std::string uid) {
     return buffer.str();  // Return the content as a string
 }
 
+bool RemoveVimFile(std::string uid) {
+    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
+
+    if (std::remove(filename.c_str()) != 0) {
+        // If remove fails, return false
+        return false;
+    } else {
+        // If remove succeeds, return true
+        return true;
+    }
+}
+
 Display::Display() {
 }
 
@@ -75,11 +87,8 @@ void Display::Show() {
     std::vector<std::string> tab_entries = Db.GetNames();
     std::vector<std::string> Files = Db.GetFileNames();
 
-    // auto tab_selection = Menu(&tab_entries, &tab_index, MenuOption::VerticalAnimated()) | size(WIDTH, EQUAL, 25) | color(Color::RGB(153, 153, 153));
-
     std::deque<Messages> AllMessages;
     long index = 0;
-    // Get the API key from the environment variable
     const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
     for(auto File: Files) {
         if(tab_entries.at(index) == "New Chat") {
@@ -93,7 +102,6 @@ void Display::Show() {
     }
 
     std::string vim_content = GetVimContent("1234");
-    std::string previous_vim_content = vim_content;
 
     int scroll_position = -1;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
@@ -109,7 +117,7 @@ void Display::Show() {
 
         int max_line_width;
         int visible_height;
-        // Get terminal width minus the specified width
+
         if(scroll_position == -1) {
             max_line_width = (box.x_max > box.x_min) ? (box.x_max - box.x_min) : Terminal::Size().dimx - LINEWIDTHCONSTRAINT;
             visible_height = (box.y_max > box.y_min) ? (box.y_max - box.y_min) : Terminal::Size().dimy - 3;
@@ -164,7 +172,6 @@ void Display::Show() {
             for (auto& M : Message.Assistant)
                 elements.push_back(M);
             
-            // Only add the trailing space if it's not the last message
             if (std::next(it) != Messages.end()) {
                 elements.push_back(text(" "));
             }
@@ -200,36 +207,41 @@ void Display::Show() {
         return rendered_content | reflect(box); // Correct usage
     });
 
-    ftxui::Component main_container;
-    ftxui::Component tab_selection;
+    ftxui::Component tab_selection = Container::Vertical({}, &tab_index);
+
+    bool input_string_changed = false;
+    std::string input_content = "";
+    std::string input_string = "";
+
+    auto input_option = InputOption();
+    input_option.on_enter = [&] {
+        input_content = input_string;
+        input_string = "";
+        input_string_changed = true;
+        tab_selection->TakeFocus();
+    };
+
+    ftxui::Component input_box = Input(&input_string, "Press e to edit or shift-e to open vim-input", input_option) | bgcolor(Color::Black);
 
     auto rebuild_ui = [&]() {
-        // Create menu entries dynamically based on tab_entries
         Db.Get();
         Files = Db.GetFileNames();
         tab_entries = Db.GetNames();
         std::vector<ftxui::Component> entries;
         for (size_t i = 0; i < tab_entries.size(); ++i) {
-            prependDebugFile(tab_entries[i]);
             entries.push_back(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
         }
 
-        // Rebuild the tab selection container with new entries
         tab_selection = Container::Vertical(entries, &tab_index);
-
-        // Rebuild the main container with the updated tab_selection and tab_content
-        main_container = Container::Vertical({
-            tab_selection,
-            tab_content,
-        });
     };
 
     rebuild_ui();
 
-//     auto main_container = Container::Vertical({
-//         tab_selection,
-//         tab_content,
-//     });
+    auto main_container = Container::Vertical({
+        tab_selection,
+        tab_content,
+        input_box,
+    });
 
     auto main_renderer = Renderer(main_container, [&] {
         return vbox({
@@ -241,7 +253,7 @@ void Display::Show() {
                         tab_content->Render() | flex,
                     }) | flex,
                     separator() | color(Color::RGB(153, 153, 153)),
-                    paragraph(vim_content),
+                    input_box->Render(),
                 }) | flex,
             }) | flex
         });
@@ -253,17 +265,22 @@ void Display::Show() {
             return true;
         }
 
-        if (event == Event::Character('e')) {
-            OpenVim("1234");
+        if(!input_box->Focused()) {
+            if (event == Event::Character('E')) {
+                OpenVim("1234");
+            }
+
+            if (event == Event::Character('e')) {
+                input_box->TakeFocus();
+                return true;
+            }
         }
 
-        // Handle scrolling down with Ctrl+e
         if (event == Event::Special({5})) { // Catch Ctrl+e
             scroll_position++;
             return true;
         }
 
-        // Handle scrolling up with Ctrl+y
         if (event == Event::Special({25})) { // Catch Ctrl+y
             if (scroll_position > 0) {
                 scroll_position--;
@@ -271,13 +288,11 @@ void Display::Show() {
             return true;
         }
 
-        // Handle touchpad/mouse wheel scroll down
         if (event.is_mouse() && event.mouse().button == ftxui::Mouse::WheelDown) {
             scroll_position++;
             return true;
         }
 
-        // Handle touchpad/mouse wheel scroll up
         if (event.is_mouse() && event.mouse().button == ftxui::Mouse::WheelUp) {
             if (scroll_position > 0) {
                 scroll_position--;
@@ -295,9 +310,15 @@ void Display::Show() {
             std::this_thread::sleep_for(0.5s);
 
             vim_content = GetVimContent("1234");
-            if (vim_content != previous_vim_content && vim_content != "") {
+            if(vim_content != "" || input_string_changed) {
+
+                input_string_changed = false;
+                if(vim_content == "")
+                    vim_content = input_content;
+                input_content = "";
+
+                RemoveVimFile("1234");
                 int ti = tab_index;
-                previous_vim_content = vim_content;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
                     Messages Messages(SYSTEMCONTENT, api_key, 1);
@@ -311,36 +332,35 @@ void Display::Show() {
                     Files = Db.GetFileNames();
                     tab_entries = Db.GetNames();
 
-
-                    // REDRAW menu with new tab_entries
-                    rebuild_ui();
                     if((ti - 1) == tab_index)
                         tab_index = 1;
 
+                    tab_selection->Add(MenuEntry(tab_entries[2]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+                    tab_selection->Render();
+
+                    rebuild_ui();
                 } else {
                     AllMessages.at(ti).Add(vim_content, USER);
                     Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
                 }
 
-                    // Handle the send operation asynchronously
-                    auto future_response = std::async(std::launch::async, [&]() {
-                        auto response = AllMessages.at(ti).Send();
-                        return response;
-                    });
+                auto future_response = std::async(std::launch::async, [&]() {
+                    auto response = AllMessages.at(ti).Send();
+                    return response;
+                });
 
-                    // Detach the future handling to allow the UI to refresh
-                    std::thread([&, future_response = std::move(future_response)]() mutable {
-                        auto response = future_response.get(); // Wait for send to complete and get the result
-                        if (!response.empty()) {
-                            AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
-                            Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
-                            auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
-                        } else {
-                            prependDebugFile("Empty response received."); // Debug
-                        }
-                    }).detach();
+                std::thread([&, future_response = std::move(future_response)]() mutable {
+                    auto response = future_response.get(); // Wait for send to complete and get the result
+                    if (!response.empty()) {
+                        AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
+                        Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                        auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
+                    } else {
+                        prependDebugFile("Empty response received."); // Debug
+                    }
+                }).detach();
 
-                    auto userMessages = AllMessages.at(ti).GetUserMessages();
+                vim_content = "";
 
             }
 
