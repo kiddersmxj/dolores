@@ -70,14 +70,12 @@ Display::~Display() {
 
 void Display::Show() {
     auto screen = ScreenInteractive::Fullscreen();
-    std::string TestEntry = "";
 
     int tab_index = 0;
-    std::vector<std::string> tab_entries;
-    tab_entries = Db.GetNames();
+    std::vector<std::string> tab_entries = Db.GetNames();
     std::vector<std::string> Files = Db.GetFileNames();
 
-    auto tab_selection = Menu(&tab_entries, &tab_index, MenuOption::VerticalAnimated()) | size(WIDTH, EQUAL, 25) | color(Color::RGB(153, 153, 153));
+    // auto tab_selection = Menu(&tab_entries, &tab_index, MenuOption::VerticalAnimated()) | size(WIDTH, EQUAL, 25) | color(Color::RGB(153, 153, 153));
 
     std::deque<Messages> AllMessages;
     long index = 0;
@@ -94,7 +92,6 @@ void Display::Show() {
         index++;
     }
 
-    // std::string tab_content_text = jsons.at(tab_index)
     std::string vim_content = GetVimContent("1234");
     std::string previous_vim_content = vim_content;
 
@@ -203,10 +200,36 @@ void Display::Show() {
         return rendered_content | reflect(box); // Correct usage
     });
 
-    auto main_container = Container::Vertical({
-        tab_selection,
-        tab_content,
-    });
+    ftxui::Component main_container;
+    ftxui::Component tab_selection;
+
+    auto rebuild_ui = [&]() {
+        // Create menu entries dynamically based on tab_entries
+        Db.Get();
+        Files = Db.GetFileNames();
+        tab_entries = Db.GetNames();
+        std::vector<ftxui::Component> entries;
+        for (size_t i = 0; i < tab_entries.size(); ++i) {
+            prependDebugFile(tab_entries[i]);
+            entries.push_back(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+        }
+
+        // Rebuild the tab selection container with new entries
+        tab_selection = Container::Vertical(entries, &tab_index);
+
+        // Rebuild the main container with the updated tab_selection and tab_content
+        main_container = Container::Vertical({
+            tab_selection,
+            tab_content,
+        });
+    };
+
+    rebuild_ui();
+
+//     auto main_container = Container::Vertical({
+//         tab_selection,
+//         tab_content,
+//     });
 
     auto main_renderer = Renderer(main_container, [&] {
         return vbox({
@@ -227,12 +250,6 @@ void Display::Show() {
     main_renderer = CatchEvent(main_renderer, [&](Event event) {
         if (event == Event::Character('q') || event == Event::Character('Q')) {
             screen.ExitLoopClosure()();
-            return true;
-        }
-
-        if (event == Event::Return) {
-            TestEntry = "TEST";
-            tab_entries[1] = TestEntry;
             return true;
         }
 
@@ -281,37 +298,56 @@ void Display::Show() {
             if (vim_content != previous_vim_content && vim_content != "") {
                 int ti = tab_index;
                 previous_vim_content = vim_content;
-                AllMessages.at(ti).Add(vim_content, USER);
-                Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                if(tab_entries.at(ti) == "New Chat") {
+                    ti++;
+                    Messages Messages(SYSTEMCONTENT, api_key, 1);
+                    Messages.Add(vim_content, USER);
 
-                // Handle the send operation asynchronously
-                auto future_response = std::async(std::launch::async, [&]() {
-                    auto response = AllMessages.at(ti).Send();
-                    return response;
-                });
+                    std::string Name = Messages.MakeName();
+                    Db.SaveFile(Messages.GetRequest(), ChatArchiveDir, Name);
 
-                // Detach the future handling to allow the UI to refresh
-                std::thread([&, future_response = std::move(future_response)]() mutable {
-                    auto response = future_response.get(); // Wait for send to complete and get the result
-                    if (!response.empty()) {
-                        AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
-                        Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                    AllMessages.insert(AllMessages.begin() + 1, Messages);
 
-                        auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
-                    } else {
-                        prependDebugFile("Empty response received."); // Debug
-                    }
-                }).detach();
+                    Files = Db.GetFileNames();
+                    tab_entries = Db.GetNames();
 
-                auto userMessages = AllMessages.at(ti).GetUserMessages();
+
+                    // REDRAW menu with new tab_entries
+                    rebuild_ui();
+                    if((ti - 1) == tab_index)
+                        tab_index = 1;
+
+                } else {
+                    AllMessages.at(ti).Add(vim_content, USER);
+                    Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                }
+
+                    // Handle the send operation asynchronously
+                    auto future_response = std::async(std::launch::async, [&]() {
+                        auto response = AllMessages.at(ti).Send();
+                        return response;
+                    });
+
+                    // Detach the future handling to allow the UI to refresh
+                    std::thread([&, future_response = std::move(future_response)]() mutable {
+                        auto response = future_response.get(); // Wait for send to complete and get the result
+                        if (!response.empty()) {
+                            AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
+                            Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                            auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
+                        } else {
+                            prependDebugFile("Empty response received."); // Debug
+                        }
+                    }).detach();
+
+                    auto userMessages = AllMessages.at(ti).GetUserMessages();
+
             }
-
-            // Update the tab content based on ti
-            // tab_content_text = Db.ReadFile(ti).dump(4);
 
             screen.Post([&] {
                 screen.Post(Event::Custom); 
             });
+
         }
     });
 

@@ -113,8 +113,7 @@ int main(int argc, char** argv) {
         int MessageIndex = 0;
         std::string system_content = SYSTEMCONTENT;
         // Add the initial system message to the history
-        Messages Message(system_content, api_key);
-        Db.ReadFile(1);
+        Messages Message(system_content, api_key, 1);
 
         // Interactive loop for repeated user input
         while (true) {

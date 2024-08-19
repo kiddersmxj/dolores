@@ -12,7 +12,9 @@ class Database {
     public:
         Database();
         ~Database();
+        void Get();
         void SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name);
+        void SaveFile(const json& request_payload, const std::string& dir, std::string Name);
         std::string generateUID();
         std::vector<std::string> GetFileNames();
         std::vector<std::string> GetNames();

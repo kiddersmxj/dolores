@@ -37,6 +37,15 @@ Database::Database() {
     } catch (const fs::filesystem_error& e) {
         std::cerr << "Filesystem error: " << e.what() << std::endl;
     }
+    Get();
+}
+
+Database::~Database() {
+}
+
+void Database::Get() {
+    jsonNames.clear();
+    jsonFileNames.clear();
 
     // Vector to store files and their last modified time
     std::vector<FileData> files;
@@ -90,9 +99,6 @@ Database::Database() {
     }
 }
 
-Database::~Database() {
-}
-
 // Function to generate a random 10-digit UID as a string
 std::string Database::generateUID() {
     std::random_device rd;  // Seed for the random number engine
@@ -101,6 +107,9 @@ std::string Database::generateUID() {
     return std::to_string(dis(gen));
 }
 
+void Database::SaveFile(const json& request_payload, const std::string& dir, std::string Name) {
+    SaveFile(request_payload, dir, generateUID(), Name);
+}
 
 void Database::SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name) {
     // Ensure the directory exists
