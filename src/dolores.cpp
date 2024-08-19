@@ -24,6 +24,26 @@ std::string GetInput() {
     return user_content;
 }
 
+void outputMarkdownWithGlow(const std::string& markdownText) {
+    char command[256];           // Adjust the size of the buffer as needed
+    // Format the command string
+    sprintf(command, "glow --style=%s", getenv(GlowStylesheet.c_str()));
+
+    // Open a process to run the `glow` command
+    FILE* pipe = popen(command, "w");
+    // FILE* pipe = popen("glow --style=dark", "w");
+    if (!pipe) {
+        std::cerr << "Could not start glow.\n";
+        return;
+    }
+
+    // Write the markdown text to the `glow` process
+    fprintf(pipe, "%s", markdownText.c_str());
+
+    // Close the process after writing
+    pclose(pipe);
+}
+
 int main(int argc, char** argv) {
     int HelpFlag = 0;
     int VersionFlag = 0;
@@ -76,7 +96,7 @@ int main(int argc, char** argv) {
     }
 
     if(TestFlag) {
-        Database Database;
+        Database Db;
 
         // Get the API key from the environment variable
         const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
@@ -84,14 +104,16 @@ int main(int argc, char** argv) {
             std::cerr << "Error: " << OPENAI_API_KEY_ENV_VAR << " environment variable not set." << std::endl;
             return EXIT_FAILURE;
         }
+            std::cout << 0.1 << std::endl;
 
         // Generate the chats UID
-        const std::string uid = Database.generateUID();
+        const std::string uid = Db.generateUID();
+            std::cout << 0.2 << std::endl;
         std::string Name = "";
         int MessageIndex = 0;
         std::string system_content = SYSTEMCONTENT;
         // Add the initial system message to the history
-        Json Message(system_content, api_key);
+        Messages Message(system_content, api_key, 1);
 
         // Interactive loop for repeated user input
         while (true) {
@@ -103,11 +125,11 @@ int main(int argc, char** argv) {
 
             /* if(MessageIndex % 5 == 0) */
             if(MessageIndex == 0) {
-                Name = Message.Name();
+                Name = Message.MakeName();
             }
 
             // Save the JSON data to a file
-            Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
+            Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
             // Parse the response and get the assistant's reply
             std::string assistant_reply = Message.ParseResponse(Message.Send());
@@ -120,7 +142,7 @@ int main(int argc, char** argv) {
                 std::cout << "Total tokens: " << GetTokens(user_content, assistant_reply) << std::endl;
 
                 // Save the updated JSON data after the assistant's reply
-                Database.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
+                Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
 
                 // Output the assistant's response with Markdown formatting
                 outputMarkdownWithGlow(assistant_reply);
@@ -131,7 +153,9 @@ int main(int argc, char** argv) {
         return EXIT_SUCCESS;
     }
 
-    Database Database;
+    /* Database Db; */
+    Display Display;
+    Display.Show();
 
     return 0;
 }

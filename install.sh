@@ -4,7 +4,7 @@ if [[ 1 != "" ]]; then
     ARGS="-D1"
 fi
 
-cmake -B build ARGS && cmake --build build && sudo cmake --install build
+cmake -B build -DCMAKE_BUILD_TYPE=Debug ARGS && cmake --build build && sudo cmake --install build
 
 # Copyright (c) 2024, Maxamilian Kidd-May
 # All rights reserved.

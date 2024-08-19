@@ -12,10 +12,16 @@ class Database {
     public:
         Database();
         ~Database();
+        void Get();
         void SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name);
+        void SaveFile(const json& request_payload, const std::string& dir, std::string Name);
         std::string generateUID();
+        std::vector<std::string> GetFileNames();
+        std::vector<std::string> GetNames();
+        json ReadFile(std::string Name);
+        json ReadFile(int Index);
     private:
-        std::vector<std::string> jsonFiles;
+        std::vector<std::string> jsonFileNames;
         std::vector<std::string> jsonNames;
 
     struct FileData {

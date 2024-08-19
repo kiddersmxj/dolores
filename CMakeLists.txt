@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Project definition
 project(dolores
@@ -86,10 +87,10 @@ target_sources(dolores
     PRIVATE src/dolores.cpp
     PRIVATE src/curl.cpp
     PRIVATE src/tokeniser.cpp
-    PRIVATE src/output.cpp
+    PRIVATE src/markdown.cpp
     PRIVATE src/display.cpp
     PRIVATE src/database.cpp
-    PRIVATE src/json.cpp
+    PRIVATE src/messages.cpp
 )
 
 # Copyright (c) 2024, Maxamilian Kidd-May
