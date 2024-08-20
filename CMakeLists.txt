@@ -91,6 +91,7 @@ target_sources(dolores
     PRIVATE src/display.cpp
     PRIVATE src/database.cpp
     PRIVATE src/messages.cpp
+    PRIVATE src/shorts.cpp
 )
 
 # Copyright (c) 2024, Maxamilian Kidd-May

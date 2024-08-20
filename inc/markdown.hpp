@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "shorts.hpp"
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -20,6 +21,7 @@ class Markdown {
         ftxui::Element ParseTextWithStyles(const std::string& text);
         bool StartsWith(const std::string& str, const std::string& prefix);
         std::string CreateTopBorder(int length);
+        std::string CreateTopBorder(int length, std::string Title);
         std::string CreateBottomBorder(int length);
         std::string markdownContent;
         int maxWidth;

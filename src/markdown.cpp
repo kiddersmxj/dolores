@@ -28,6 +28,37 @@ Markdown::Markdown(const std::string& markdownContent, int maxWidth)
     : markdownContent(markdownContent), maxWidth(maxWidth) {
 }
 
+std::string Markdown::CreateTopBorder(int length, std::string Title) {
+    if (length < 2) {
+        return ""; // If length is less than 2, return an empty string
+    }
+
+    std::wstring border = L"╭";
+
+    // Convert the Title from std::string to std::wstring
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wTitle = converter.from_bytes(Title);
+
+    int titleLength = wTitle.length();
+
+    // Calculate the remaining space after the title
+    int remainingSpace = length - 2 - titleLength;
+
+    if (remainingSpace >= 0) {
+        border += wTitle;
+        border += std::wstring(remainingSpace, L'─');
+    } else {
+        // If title is too long, truncate it and fill the remaining space
+        wTitle = wTitle.substr(0, length - 2);
+        border += wTitle;
+    }
+
+    border += L"╮";
+
+    // Convert the wstring to a string using UTF-8 encoding
+    return converter.to_bytes(border);
+}
+
 std::string Markdown::CreateTopBorder(int length) {
     if (length < 2) {
         return ""; // If length is less than 2, return an empty string
@@ -191,7 +222,7 @@ std::deque<Element> Markdown::ParseMarkdownContent() {
     bool inCodeBlock = false;
     std::string codeLanguage;
 
-    std::regex codeBlockRegex(R"(^\s*```.*)");  // Regex to match lines starting with optional spaces followed by ```
+    std::regex codeBlockRegex(R"(^\s*.*```.*)");  // Regex to match lines starting with optional spaces followed by ```
     std::regex inlineCodeRegex("`([^`]*)`");    // Regex to match inline code sections
     std::regex boldRegex("\\*\\*(.*?)\\*\\*");
     std::regex italicRegex("\\*(.*?)\\*");
@@ -204,8 +235,8 @@ std::deque<Element> Markdown::ParseMarkdownContent() {
             if (inCodeBlock) {
                 codeLanguage = line.substr(line.find("```") + 3);  // Capture the language
                 flags.push_back("CodeBlock");
-                elements.push_back(text(codeLanguage + ":"));
-                elements.push_back(text(CreateTopBorder(maxWidth)) | color(Color::GrayDark));
+                // elements.push_back(text(codeLanguage + ":"));
+                elements.push_back(text(CreateTopBorder(maxWidth, codeLanguage)) | color(Color::GrayDark));
             } else {
                 codeLanguage.clear();
                 elements.push_back(text(CreateBottomBorder(maxWidth)) | color(Color::GrayDark));
