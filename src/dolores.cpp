@@ -48,16 +48,20 @@ int main(int argc, char** argv) {
     int HelpFlag = 0;
     int VersionFlag = 0;
     int TestFlag = 0;
+    int ShortFlag = 0;
     int opt;
+
+    std::string ShortString;
 
     struct option Opts[] = {
         { "help", no_argument, &HelpFlag, 1 },
         { "version", no_argument, &VersionFlag, 1 },
         { "test", no_argument, &TestFlag, 1 },
+        { "short", required_argument, &TestFlag, 1 },
     };
 
     while (1) {
-        opt = getopt_long(argc, argv, "hvt", Opts, 0);
+        opt = getopt_long(argc, argv, "hvts:", Opts, 0);
 
         if (opt == -1) {
             if (HelpFlag && VersionFlag) {
@@ -73,6 +77,10 @@ int main(int argc, char** argv) {
             break;
         case 'v':
             VersionFlag = 1;
+            break;
+        case 's':
+            ShortFlag = 1;
+            ShortString = optarg;
             break;
         case 't':
             TestFlag = 1;
@@ -153,11 +161,17 @@ int main(int argc, char** argv) {
         return EXIT_SUCCESS;
     }
 
+    if(ShortFlag) {
+        Shorts Short(ShortsDir, ShortString);
+        std::cout << Short.Return() << std::endl;
+        return EXIT_SUCCESS;
+    }
+
     /* Database Db; */
     Display Display;
     Display.Show();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void Usage() {

@@ -23,8 +23,39 @@ void PrependToDebugFile(const std::string& text) {
     }
 }
 
+Shorts::Shorts(const std::string& directory, std::string &name) {
+    filePath = findFile(directory, name);
+    if(filePath.empty()) {
+        std::cerr << "Short not found: " << name << std::endl;
+    }
+}
 
 Shorts::Shorts(std::string ShortsDir) : ShortsDir(ShortsDir) {
+}
+
+std::string Shorts::Return() {
+    return readFile();
+}
+
+std::string Shorts::findFile(const std::string& directory, std::string &name) {
+    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+        if (entry.is_regular_file() && entry.path().filename() == name) {
+            return entry.path().string();
+        }
+    }
+    return "";
+}
+
+std::string Shorts::readFile() {
+    if(!filePath.empty()) {
+        std::ifstream file(filePath);
+        if (!file) {
+            std::cerr << "Could not acces the short's file: " << filePath << std::endl;
+            return "";
+        }
+        return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    }
+    return "";
 }
 
 Shorts::~Shorts() {

@@ -15,18 +15,23 @@
 class Shorts {
     public:
         Shorts(std::string ShortsDir);
+        Shorts(const std::string& directory, std::string &name);
         ~Shorts();
         // Checks free numbers for the code type and returns the lowest
         std::string Initialise(std::string prefix);
         bool Initialised();
         void AddLine(std::string Line);
         void End();
+        std::string Return();
     private:
         std::string Prefix;
         std::string Suffix;
         std::string ShortsDir;
         bool InitialisedBool = false;
+        std::string filePath;
         std::deque<std::string> Lines;
+        std::string findFile(const std::string& directory, std::string &name);
+        std::string readFile();
 };
 
 #endif
