@@ -1,10 +1,4 @@
 #include "../inc/markdown.hpp"
-#include <codecvt>
-#include <regex>
-
-#include <iostream>
-#include <fstream>
-#include <string>
 
 void appendToDebugFile(const std::string& text) {
     // Open the file in append mode (std::ios::app)
@@ -22,10 +16,38 @@ void appendToDebugFile(const std::string& text) {
     }
 }
 
-using namespace ftxui;
-
 Markdown::Markdown(const std::string& markdownContent, int maxWidth)
     : markdownContent(markdownContent), maxWidth(maxWidth) {
+
+    // Initialize color settings
+    KeywordColour = Color::Magenta;
+    TypeColour = Color::Yellow;
+    FunctionColour = Color::Green;
+    VariableColour = Color::Blue;
+    DeclaredVariableColour = Color::Blue;
+    DeclaredClassColour = Color::Blue;
+    StringLiteralColour = Color::Red;
+    CommentColour = Color::GrayDark;
+    PreprocessorColour = Color::Red;
+    DefaultColour = Color::White;
+    SymbolColour = Color::White;
+    NamespaceColour = Color::Magenta;
+
+    // Initialize keywords and types
+    keywords = {
+        "int", "float", "double", "return", "if", "else", "for", "while", "class", "struct", "void", "const", "constexpr", 
+        "static", "using", "namespace", "auto", "char", "bool", "public", "private", "protected", "virtual", "override", 
+        "template", "typename", "nullptr", "true", "false"
+    };
+
+    types = {
+        "string", "vector", "map", "set", "unordered_map", "unordered_set", "filesystem", "ofstream", "ifstream", 
+        "stringstream", "regex", "smatch", "ostringstream", "deque"
+    };
+
+    symbols = {
+        '(', ')', '{', '}', '[', ']', ';', ',', '.', '<', '>', '=', '+', '-', '*', '/', '%', '&', '|', '^', '!', '~'
+    };
 }
 
 std::string Markdown::CreateTopBorder(int length, std::string Title) {
@@ -201,7 +223,7 @@ ftxui::Element Markdown::ApplyFormatting(const std::string& line, const std::vec
         } else if (flag == "CodeBlock") {
             element = hbox({
                 text("│") | color(Color::GrayDark),
-                text(line) | color(Color::Magenta),
+                parse_code(line, inside_comment_block),
                 text("│") | color(Color::GrayDark),
             });
         } else if (flag == "Bold") {
@@ -211,6 +233,26 @@ ftxui::Element Markdown::ApplyFormatting(const std::string& line, const std::vec
         } else if (flag == "InlineCode") {
             element = text(line) | bgcolor(Color::RGB(71, 71, 71));
         }
+    }
+
+    return element;
+}
+
+ftxui::Element Markdown::ApplyFormatting(const std::string& line, std::string language) {
+    auto element = text(line);
+
+    if (language.find("cpp") != std::string::npos) {
+        element = hbox({
+            text("│") | color(Color::GrayDark),
+            parse_code(line, inside_comment_block),
+            text("│") | color(Color::GrayDark),
+        });
+    } else {
+        element = hbox({
+            text("│") | color(Color::GrayDark),
+            text(line) | color(Color::Blue),
+            text("│") | color(Color::GrayDark),
+        });
     }
 
     return element;
@@ -245,7 +287,7 @@ std::deque<Element> Markdown::ParseMarkdownContent() {
             flags.push_back("CodeBlock");
             auto wrappedLines = WrapCode(line, maxWidth);
             for (const auto& wrappedLine : wrappedLines) {
-                elements.push_back(ApplyFormatting(wrappedLine, flags));
+                elements.push_back(ApplyFormatting(wrappedLine, codeLanguage));
             }
         } else if (StartsWith(line, "# ")) {
             flags.push_back("Header1");
@@ -334,6 +376,209 @@ ftxui::Element Markdown::ParseTextWithStyles(const std::string& text) {
 
 std::deque<Element> Markdown::RenderMarkdown() {
     return ParseMarkdownContent();
+}
+
+bool Markdown::is_keyword(const std::string& word) {
+    return keywords.find(word) != keywords.end();
+}
+
+bool Markdown::is_type(const std::string& word) {
+    if (types.find(word) != types.end()) {
+        return true;
+    }
+    size_t pos = word.find("::");
+    if (pos != std::string::npos) {
+        std::string base_type = word.substr(pos + 2);
+        return types.find(base_type) != types.end();
+    }
+    return false;
+}
+
+bool Markdown::is_function(const std::string& word, const std::string& next_word) {
+    return next_word == "(";
+}
+
+bool Markdown::is_variable(const std::string& word) {
+    return !word.empty() && (islower(word[0]) || word[0] == '_') && !is_keyword(word);
+}
+
+bool Markdown::is_preprocessor(const std::string& word) {
+    return !word.empty() && word.front() == '#';
+}
+
+bool Markdown::is_comment(const std::string& word) {
+    return word.size() >= 2 && word.substr(0, 2) == "//";
+}
+
+bool Markdown::is_declared_identifier(const std::string& word) {
+    return declared_identifiers.find(word) != declared_identifiers.end();
+}
+
+std::vector<std::string> Markdown::split_word(const std::string& word) {
+    std::vector<std::string> tokens;
+    std::string current_token;
+    for (char c : word) {
+        if (symbols.find(c) != symbols.end()) {
+            if (!current_token.empty()) {
+                tokens.push_back(current_token);
+                current_token.clear();
+            }
+            tokens.push_back(std::string(1, c));  // Add the symbol as its own token
+        } else {
+            current_token += c;
+        }
+    }
+    if (!current_token.empty()) {
+        tokens.push_back(current_token);
+    }
+    return tokens;
+}
+
+Element Markdown::parse_word(const std::string& word, const std::string& next_word, bool inside_string_literal, bool inside_include, bool inside_comment) {
+    if (inside_comment) {
+        return text(word) | color(CommentColour);
+    } else if (inside_include) {
+        return text(word) | color(PreprocessorColour);
+    } else if (inside_string_literal) {
+        return text(word) | color(StringLiteralColour);
+    } else if (is_preprocessor(word)) {
+        return text(word) | color(PreprocessorColour);
+    } else if (is_comment(word)) {
+        return text(word) | color(CommentColour);
+    } else if (is_declared_identifier(word)) {
+        return text(word) | color(declared_identifiers[word]);
+    } else if (is_function(word, next_word)) {
+        return text(word) | color(FunctionColour);
+    } else if (is_type(word)) {
+        return text(word) | color(TypeColour);  // Types are highlighted with TypeColour
+    } else if (is_keyword(word)) {
+        return text(word) | color(KeywordColour);
+    } else if (is_variable(word)) {
+        return text(word) | color(VariableColour);
+    } else if (symbols.find(word[0]) != symbols.end()) {
+        return text(word) | color(SymbolColour);
+    } else if (word.find("::") != std::string::npos) {
+        return text(word) | color(NamespaceColour);  // Handle namespace like std::
+    } else {
+        return text(word) | color(DefaultColour);
+    }
+}
+
+void Markdown::track_identifier(const std::string& word, const std::string& previous_word) {
+    std::string clean_word = word;
+
+    while (!clean_word.empty() && (clean_word.back() == ';' || clean_word.back() == '=' || clean_word.back() == '(')) {
+        clean_word.pop_back();
+    }
+
+    if (previous_word == "class" || previous_word == "struct") {
+        declared_identifiers[clean_word] = DeclaredClassColour;
+    }
+    else if (is_type(previous_word) || previous_word == "auto" || (is_keyword(previous_word) && clean_word.front() != '(')) {
+        declared_identifiers[clean_word] = DeclaredVariableColour;
+    }
+}
+
+std::vector<Element> Markdown::parse_line(const std::string& line, bool& inside_comment_block) {
+    std::vector<Element> elements;
+    std::string current_word;
+    std::string previous_word;
+    bool inside_string_literal = false;
+    bool inside_include = false;
+
+    for (size_t i = 0; i < line.size(); ++i) {
+        char c = line[i];
+
+        if (inside_comment_block) {
+            current_word += c;
+            if (current_word.size() >= 2 && current_word.substr(current_word.size() - 2) == "*/") {
+                inside_comment_block = false;
+                elements.push_back(text(current_word) | color(CommentColour));
+                current_word.clear();
+            }
+        } else if (c == '/' && i + 1 < line.size() && line[i + 1] == '*') {
+            if (!current_word.empty()) {
+                track_identifier(current_word, previous_word);
+                elements.push_back(parse_word(current_word, "", inside_string_literal, inside_include, inside_comment_block));
+                previous_word = current_word;
+                current_word.clear();
+            }
+            inside_comment_block = true;
+            current_word += "/*";
+            i++;  // Skip the '*' character
+        } else if (c == '/' && i + 1 < line.size() && line[i + 1] == '/') {
+            if (!current_word.empty()) {
+                track_identifier(current_word, previous_word);
+                elements.push_back(parse_word(current_word, "", inside_string_literal, inside_include, inside_comment_block));
+                previous_word = current_word;
+                current_word.clear();
+            }
+            std::string comment = line.substr(i);
+            elements.push_back(text(comment) | color(CommentColour));
+            break;  // Skip the rest of the line as it's a comment
+        } else if (c == '"' && !inside_include && !inside_comment_block) {
+            if (!current_word.empty()) {
+                auto tokens = split_word(current_word);
+                track_identifier(current_word, previous_word);
+                for (size_t j = 0; j < tokens.size(); ++j) {
+                    elements.push_back(parse_word(tokens[j], (j + 1 < tokens.size()) ? tokens[j + 1] : "", inside_string_literal, inside_include, inside_comment_block));
+                }
+                previous_word = current_word;
+                current_word.clear();
+            }
+            inside_string_literal = !inside_string_literal;
+            elements.push_back(text(std::string(1, c)) | color(StringLiteralColour));
+        } else if (inside_include || (current_word == "#include" && c == ' ')) {
+            if (current_word == "#include") {
+                elements.push_back(text(current_word) | color(PreprocessorColour));
+                current_word.clear();
+                inside_include = true;
+            }
+
+            if (c == '<' || c == '"') {
+                current_word += c;
+            } else if (c == '>' || c == '"') {
+                current_word += c;
+                elements.push_back(text(current_word) | color(PreprocessorColour));
+                current_word.clear();
+                inside_include = false;
+            } else {
+                current_word += c;
+            }
+        } else if (std::isspace(c) && !inside_string_literal) {
+            if (!current_word.empty()) {
+                auto tokens = split_word(current_word);
+                track_identifier(current_word, previous_word);
+                for (size_t j = 0; j < tokens.size(); ++j) {
+                    elements.push_back(parse_word(tokens[j], (j + 1 < tokens.size()) ? tokens[j + 1] : "", inside_string_literal, inside_include, inside_comment_block));
+                }
+                previous_word = current_word;
+                current_word.clear();
+            }
+            if (c == ' ') {
+                elements.push_back(text(" "));
+            } else if (c == '\t') {
+                elements.push_back(text("    "));  // Represent a tab with four spaces
+            }
+        } else {
+            current_word += c;
+        }
+    }
+
+    if (!current_word.empty()) {
+        auto tokens = split_word(current_word);
+        track_identifier(current_word, previous_word);
+        for (size_t j = 0; j < tokens.size(); ++j) {
+            elements.push_back(parse_word(tokens[j], (j + 1 < tokens.size()) ? tokens[j + 1] : "", inside_string_literal, inside_include, inside_comment_block));
+        }
+    }
+
+    return elements;
+}
+
+Element Markdown::parse_code(const std::string& line, bool& inside_comment_block) {
+    std::vector<Element> elements = parse_line(line, inside_comment_block);
+    return hbox(elements);
 }
 
 // Copyright (c) 2024, Maxamilian Kidd-May
