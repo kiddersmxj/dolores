@@ -3,7 +3,11 @@
 
 #include "config.hpp"
 #include "curl.hpp"
+#include "shorts.hpp"
+
 #include <deque>
+#include <fstream>
+#include <regex>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -27,7 +31,10 @@ class Messages {
         std::string GetMessagePairString();
         std::deque<std::string> GetUserMessages();
         std::deque<std::string> GetAssistantMessages();
+
     private:
+        std::vector<std::string> SplitString(const std::string& str, char delimiter);
+        std::string CatchParseCode(std::string Response);
         bool NewChat;
         std::string api_key;
         std::deque<json> messages;

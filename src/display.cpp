@@ -260,10 +260,6 @@ void Display::Show() {
     });
 
     main_renderer = CatchEvent(main_renderer, [&](Event event) {
-        if (event == Event::Character('q') || event == Event::Character('Q')) {
-            screen.ExitLoopClosure()();
-            return true;
-        }
 
         if(!input_box->Focused()) {
             if (event == Event::Character('E')) {
@@ -272,6 +268,11 @@ void Display::Show() {
 
             if (event == Event::Character('e')) {
                 input_box->TakeFocus();
+                return true;
+            }
+
+            if (event == Event::Character('q') || event == Event::Character('Q')) {
+                screen.ExitLoopClosure()();
                 return true;
             }
         }

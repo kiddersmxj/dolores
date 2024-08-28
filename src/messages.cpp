@@ -1,5 +1,28 @@
 #include "../inc/messages.hpp"
-#include <fstream>
+
+void prependToDebugFile(const std::string& text) {
+    // Read the existing content of the file
+    std::ifstream debugFileIn("debug");
+    std::stringstream buffer;
+    buffer << debugFileIn.rdbuf();
+    std::string oldContent = buffer.str();
+    debugFileIn.close();
+
+    // Open the file in truncate mode to overwrite it
+    std::ofstream debugFileOut("debug", std::ios::trunc);
+
+    // Check if the file is open
+    if (debugFileOut.is_open()) {
+        // Write the new text followed by the old content
+        debugFileOut << text << std::endl << oldContent;
+
+        // Close the file
+        debugFileOut.close();
+    } else {
+        std::cerr << "Unable to open the file 'debug'" << std::endl;
+    }
+}
+
 
 void appenddebugfile(const std::string& text) {
     // Open the file in append mode (std::ios::app)
@@ -136,6 +159,52 @@ std::string Messages::MakeName() {
     return ParseResponse(sendOpenAIRequest(api_key, NameRequest.dump()));
 }
 
+std::string Messages::CatchParseCode(std::string Response) {
+    auto lines = SplitString(Response, '\n');
+    std::deque<std::string> Output;
+
+    std::string codeLanguage;
+
+    std::regex codeBlockRegex(R"(\s*```\s*(\w+))");  // Regex to match lines starting with optional spaces followed by ```
+    std::regex inlineCodeRegex("`([^`]*)`");    // Regex to match inline code sections
+    std::regex CodeEndRegex(R"(\s*```+\s*)");
+
+    std::string Short = "";
+    std::smatch Search;
+    Shorts Shorts(ShortsDir);
+
+    bool InCode = false;
+
+    for (const auto& line : lines) {
+        if (std::regex_match(line, Search, codeBlockRegex)) {
+            if(!InCode) {
+                codeLanguage = Search[1];
+                if(codeLanguage.empty()) {
+                    codeLanguage = "unk";
+                }
+                std::string num = Shorts.Initialise(codeLanguage);
+                Output.push_back("```" + codeLanguage + num);
+                InCode = !InCode;
+            } else {
+                Output.push_back(line);
+            }
+        } else if (std::regex_match(line, Search, CodeEndRegex) && InCode) {
+            Shorts.End();
+            InCode = !InCode;
+            Output.push_back(line);
+        } else if(InCode) {
+            Shorts.AddLine(line);
+            Output.push_back(line);
+        } else
+            Output.push_back(line);
+    }
+    std::string OutputString;
+    for (const auto& line : Output) {
+        OutputString += line + "\n";  // Append each string from the deque
+    }
+    return OutputString;
+}
+
 // Function to parse the JSON response and return the assistant's response content
 std::string Messages::ParseResponse(const std::string& response) {
     try {
@@ -146,6 +215,7 @@ std::string Messages::ParseResponse(const std::string& response) {
             !jsonResponse["choices"][0]["message"].is_null()) {
 
             std::string assistantContent = jsonResponse["choices"][0]["message"]["content"].get<std::string>();
+            assistantContent = CatchParseCode(assistantContent);
             return assistantContent;
         } else {
             std::cerr << "Error: The expected JSON structure is not present." << std::endl;
@@ -156,6 +226,17 @@ std::string Messages::ParseResponse(const std::string& response) {
         return "";
     }
 }
+
+std::vector<std::string> Messages::SplitString(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
 
 // Copyright (c) 2024, Maxamilian Kidd-May
 // All rights reserved.
