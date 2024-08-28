@@ -42,38 +42,6 @@ void appendDebugFile(const std::string& text) {
     }
 }
 
-int OpenVim(std::string uid) {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-    return k::ExecCmd("st -e vim " + filename + " > /dev/null 2>&1 &");
-}
-
-std::string GetVimContent(std::string uid) {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-    std::ifstream file(filename);
-
-    if (!file.is_open()) {
-        return "";
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();  // Read the file content into the stringstream
-    file.close();
-
-    return buffer.str();  // Return the content as a string
-}
-
-bool RemoveVimFile(std::string uid) {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-
-    if (std::remove(filename.c_str()) != 0) {
-        // If remove fails, return false
-        return false;
-    } else {
-        // If remove succeeds, return true
-        return true;
-    }
-}
-
 Display::Display() {
 }
 
@@ -101,7 +69,8 @@ void Display::Show() {
         index++;
     }
 
-    std::string vim_content = GetVimContent("1234");
+    Vim VimInput;
+    std::string vim_content = VimInput.GetVimContent();
 
     int scroll_position = -1;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
@@ -263,7 +232,7 @@ void Display::Show() {
 
         if(!input_box->Focused()) {
             if (event == Event::Character('E')) {
-                OpenVim("1234");
+                VimInput.OpenVim();
             }
 
             if (event == Event::Character('e')) {
@@ -310,7 +279,7 @@ void Display::Show() {
             using namespace std::chrono_literals;
             std::this_thread::sleep_for(0.5s);
 
-            vim_content = GetVimContent("1234");
+            vim_content = VimInput.GetVimContent();
             if(vim_content != "" || input_string_changed) {
 
                 input_string_changed = false;
@@ -318,7 +287,7 @@ void Display::Show() {
                     vim_content = input_content;
                 input_content = "";
 
-                RemoveVimFile("1234");
+                VimInput.RemoveVimFile();
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
