@@ -184,6 +184,7 @@ void Display::Show() {
     std::string input_content = "";
     std::string input_string = "";
 
+    std::string input_placeholder = "Press e to edit or E to open vim input";
     auto input_option = InputOption();
     input_option.on_enter = [&] {
         if(vim_short_input) {
@@ -195,9 +196,10 @@ void Display::Show() {
         }
         input_string = "";
         tab_selection->TakeFocus();
+        input_placeholder = "Press e to edit or E to open vim input";
     };
 
-    ftxui::Component input_box = Input(&input_string, "Press e to edit or shift-e to open vim-input", input_option) | bgcolor(Color::Black);
+    ftxui::Component input_box = Input(&input_string, input_placeholder, input_option) | bgcolor(Color::Black);
 
     auto rebuild_ui = [&]() {
         Db.Get();
@@ -239,10 +241,13 @@ void Display::Show() {
 
         if(!input_box->Focused()) {
             if (event == Event::Character('E')) {
+                vim_short_input = false;
                 VimInput.OpenVim();
+                return true;
             }
 
             if (event == Event::Character('e')) {
+                vim_short_input = false;
                 input_box->TakeFocus();
                 return true;
             }
@@ -253,6 +258,7 @@ void Display::Show() {
             }
 
             if (event == Event::Character('O')) {
+                input_placeholder = "Enter short name...";
                 vim_short_input = true;
                 input_box->TakeFocus();
                 return true;
