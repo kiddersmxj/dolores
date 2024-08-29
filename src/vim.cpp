@@ -13,11 +13,10 @@ Vim::~Vim() {
 }
 
 int Vim::OpenVim() {
-    return k::ExecCmd("st -e vim " + filename + " > /dev/null 2>&1 &");
+    return k::ExecCmdOrphan("st -e vim " + filename);
 }
 
 std::string Vim::GetVimContent() {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
     std::ifstream file(filename);
 
     if (!file.is_open()) {
@@ -32,8 +31,6 @@ std::string Vim::GetVimContent() {
 }
 
 bool Vim::RemoveVimFile() {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-
     if (std::remove(filename.c_str()) != 0) {
         // If remove fails, return false
         return false;

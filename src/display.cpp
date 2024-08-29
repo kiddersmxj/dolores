@@ -178,15 +178,22 @@ void Display::Show() {
 
     ftxui::Component tab_selection = Container::Vertical({}, &tab_index);
 
+    bool vim_short_input = false;
+
     bool input_string_changed = false;
     std::string input_content = "";
     std::string input_string = "";
 
     auto input_option = InputOption();
     input_option.on_enter = [&] {
-        input_content = input_string;
+        if(vim_short_input) {
+            vim_short_input = false;
+            Vim VimShort(ShortsDir + input_string);
+        } else {
+            input_content = input_string;
+            input_string_changed = true;
+        }
         input_string = "";
-        input_string_changed = true;
         tab_selection->TakeFocus();
     };
 
@@ -244,6 +251,12 @@ void Display::Show() {
                 screen.ExitLoopClosure()();
                 return true;
             }
+
+            if (event == Event::Character('O')) {
+                vim_short_input = true;
+                input_box->TakeFocus();
+                return true;
+            }
         }
 
         if (event == Event::Special({5})) { // Catch Ctrl+e
@@ -282,6 +295,7 @@ void Display::Show() {
             vim_content = VimInput.GetVimContent();
             if(vim_content != "" || input_string_changed) {
 
+                tab_selection->TakeFocus();
                 input_string_changed = false;
                 if(vim_content == "")
                     vim_content = input_content;
