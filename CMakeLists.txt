@@ -92,6 +92,7 @@ target_sources(dolores
     PRIVATE src/database.cpp
     PRIVATE src/messages.cpp
     PRIVATE src/shorts.cpp
+    PRIVATE src/vim.cpp
 )
 
 # Copyright (c) 2024, Maxamilian Kidd-May

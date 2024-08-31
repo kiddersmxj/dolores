@@ -42,38 +42,6 @@ void appendDebugFile(const std::string& text) {
     }
 }
 
-int OpenVim(std::string uid) {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-    return k::ExecCmd("st -e vim " + filename + " > /dev/null 2>&1 &");
-}
-
-std::string GetVimContent(std::string uid) {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-    std::ifstream file(filename);
-
-    if (!file.is_open()) {
-        return "";
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();  // Read the file content into the stringstream
-    file.close();
-
-    return buffer.str();  // Return the content as a string
-}
-
-bool RemoveVimFile(std::string uid) {
-    std::string filename = "/tmp/vim_tmpfile_" + uid + ".txt";
-
-    if (std::remove(filename.c_str()) != 0) {
-        // If remove fails, return false
-        return false;
-    } else {
-        // If remove succeeds, return true
-        return true;
-    }
-}
-
 Display::Display() {
 }
 
@@ -101,7 +69,8 @@ void Display::Show() {
         index++;
     }
 
-    std::string vim_content = GetVimContent("1234");
+    Vim VimInput;
+    std::string vim_content = VimInput.GetVimContent();
 
     int scroll_position = -1;  // Variable to track the scroll position
     int previous_tab_index = tab_index;
@@ -209,19 +178,28 @@ void Display::Show() {
 
     ftxui::Component tab_selection = Container::Vertical({}, &tab_index);
 
+    bool vim_short_input = false;
+
     bool input_string_changed = false;
     std::string input_content = "";
     std::string input_string = "";
 
+    std::string input_placeholder = "Press e to edit or E to open vim input";
     auto input_option = InputOption();
     input_option.on_enter = [&] {
-        input_content = input_string;
+        if(vim_short_input) {
+            vim_short_input = false;
+            Vim VimShort(ShortsDir + input_string);
+        } else {
+            input_content = input_string;
+            input_string_changed = true;
+        }
         input_string = "";
-        input_string_changed = true;
         tab_selection->TakeFocus();
+        input_placeholder = "Press e to edit or E to open vim input";
     };
 
-    ftxui::Component input_box = Input(&input_string, "Press e to edit or shift-e to open vim-input", input_option) | bgcolor(Color::Black);
+    ftxui::Component input_box = Input(&input_string, input_placeholder, input_option) | bgcolor(Color::Black);
 
     auto rebuild_ui = [&]() {
         Db.Get();
@@ -263,16 +241,26 @@ void Display::Show() {
 
         if(!input_box->Focused()) {
             if (event == Event::Character('E')) {
-                OpenVim("1234");
+                vim_short_input = false;
+                VimInput.OpenVim();
+                return true;
             }
 
             if (event == Event::Character('e')) {
+                vim_short_input = false;
                 input_box->TakeFocus();
                 return true;
             }
 
             if (event == Event::Character('q') || event == Event::Character('Q')) {
                 screen.ExitLoopClosure()();
+                return true;
+            }
+
+            if (event == Event::Character('O')) {
+                input_placeholder = "Enter short name...";
+                vim_short_input = true;
+                input_box->TakeFocus();
                 return true;
             }
         }
@@ -310,15 +298,16 @@ void Display::Show() {
             using namespace std::chrono_literals;
             std::this_thread::sleep_for(0.5s);
 
-            vim_content = GetVimContent("1234");
+            vim_content = VimInput.GetVimContent();
             if(vim_content != "" || input_string_changed) {
 
+                tab_selection->TakeFocus();
                 input_string_changed = false;
                 if(vim_content == "")
                     vim_content = input_content;
                 input_content = "";
 
-                RemoveVimFile("1234");
+                VimInput.RemoveVimFile();
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;

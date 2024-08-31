@@ -44,7 +44,9 @@ Messages::Messages(std::string system_content, std::string api_key, bool NewChat
     : NewChat(NewChat), api_key(api_key) {
     messages.push_back({
         {"role", "system"},
-        {"content", system_content}
+        {"content", system_content},
+        {"max_tokens", 150},
+        {"temperature", 0.5}
     });
     messagePairs = parseMessages(messages);
 }
