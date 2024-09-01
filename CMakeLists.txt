@@ -93,6 +93,7 @@ target_sources(dolores
     PRIVATE src/messages.cpp
     PRIVATE src/shorts.cpp
     PRIVATE src/vim.cpp
+    PRIVATE src/mode.cpp
 )
 
 # Copyright (c) 2024, Maxamilian Kidd-May

@@ -178,22 +178,66 @@ void Display::Show() {
 
     ftxui::Component tab_selection = Container::Vertical({}, &tab_index);
 
-    bool vim_short_input = false;
-
     bool input_string_changed = false;
     std::string input_content = "";
     std::string input_string = "";
 
-    std::string input_placeholder = "Press e to edit or E to open vim input";
+    Mode Mode;
+    std::string InputPrefix = "";
+
+    std::string input_placeholder = "";
     auto input_option = InputOption();
     input_option.on_enter = [&] {
         if (!input_string.empty() && input_string.back() == '\n') {
             input_string.pop_back();
         }
+        std::string CmdChar;
+        std::string Args;
+        // Create a stringstream from the input string
+        std::istringstream stream(input_string);
+        // Extract the first word into CmdChar
+        stream >> CmdChar;
+        // Get the rest of the sentence and store it in Args
+        std::getline(stream, Args);
+        // Remove leading spaces from Args
+        if (!Args.empty() && Args[0] == ' ') {
+            Args.erase(0, 1);
+        }
 
-        if(vim_short_input) {
-            vim_short_input = false;
+        if(Mode.IsNormal()) {
+            input_string = "";
+            tab_selection->TakeFocus();
+        } else if(Mode.IsCommand()) {
+            if(CmdChar == "q") {
+                screen.ExitLoopClosure()();
+            } else if(CmdChar == "o") {
+                Mode.Open();
+                if(!Args.empty()) {
+                    size_t pos = 0;
+                    while (pos < Args.length() && !std::isdigit(Args[pos])) {
+                        pos++;
+                    }
 
+                    std::string File = ShortsDir + Args + "." + Args.substr(0, pos);
+                    Vim VimShort(File);
+                    Mode.Normal();
+                }
+            } else if(CmdChar == "E") {
+                VimInput.OpenVim();
+                Mode.Normal();
+            } else if(CmdChar == "e") {
+                Mode.Input();
+                if(!Args.empty()) {
+                    input_content = Args;
+                    input_string_changed = true;
+                    Mode.Normal();
+                }
+            }
+        } else if(Mode.IsInput()) {
+            input_content = input_string;
+            input_string_changed = true;
+            Mode.Normal();
+        } else if(Mode.IsOpen()) {
             size_t pos = 0;
             while (pos < input_string.length() && !std::isdigit(input_string[pos])) {
                 pos++;
@@ -201,13 +245,12 @@ void Display::Show() {
 
             std::string File = ShortsDir + input_string + "." + input_string.substr(0, pos);
             Vim VimShort(File);
-        } else {
-            input_content = input_string;
-            input_string_changed = true;
+            Mode.Normal();
         }
+
+        InputPrefix = "";
         input_string = "";
-        tab_selection->TakeFocus();
-        input_placeholder = "Press e to edit or E to open vim input";
+        // tab_selection->TakeFocus();
     };
 
     ftxui::Component input_box = Input(&input_string, input_placeholder, input_option) | bgcolor(Color::Black);
@@ -222,6 +265,11 @@ void Display::Show() {
         }
 
         tab_selection = Container::Vertical(entries, &tab_index);
+
+        if(Mode.IsNormal()) {
+            InputPrefix = "";
+            tab_selection->TakeFocus();
+        }
     };
 
     rebuild_ui();
@@ -235,14 +283,18 @@ void Display::Show() {
     auto main_renderer = Renderer(main_container, [&] {
         return vbox({
             hbox({
-                tab_selection->Render(),
+                vbox({
+                    tab_selection->Render(),
+                    emptyElement() | flex,
+                    text(Mode.Get()) | center | color(Color::Magenta),
+                }),
                 separator() | color(Color::RGB(153, 153, 153)),
                 vbox({
                     vbox({
                         tab_content->Render() | flex,
                     }) | flex,
-                    separator() | color(Color::RGB(153, 153, 153)),
-                    input_box->Render(),
+                    // separator() | color(Color::RGB(153, 153, 153)),
+                    hbox(text(InputPrefix), input_box->Render() | color(Color::Black)),
                 }) | flex,
             }) | flex
         });
@@ -250,30 +302,45 @@ void Display::Show() {
 
     main_renderer = CatchEvent(main_renderer, [&](Event event) {
 
+        if (event == Event::Escape) {
+            Mode.Normal();
+            InputPrefix = "";
+            tab_selection->TakeFocus();
+            return true;
+        }
+
         if(!input_box->Focused()) {
-            if (event == Event::Character('E')) {
-                vim_short_input = false;
-                VimInput.OpenVim();
-                return true;
-            }
-
-            if (event == Event::Character('e')) {
-                vim_short_input = false;
+            InputPrefix = "";
+            if (event == Event::Character(':')) {
+                InputPrefix = ":";
+                Mode.Command();
                 input_box->TakeFocus();
                 return true;
             }
 
-            if (event == Event::Character('q') || event == Event::Character('Q')) {
-                screen.ExitLoopClosure()();
-                return true;
-            }
+            // if (event == Event::Character('E')) {
+                // Mode.Input();
+            //     VimInput.OpenVim();
+            //     return true;
+            // }
 
-            if (event == Event::Character('O')) {
-                input_placeholder = "Enter short name...";
-                vim_short_input = true;
-                input_box->TakeFocus();
-                return true;
-            }
+            // if (event == Event::Character('e')) {
+            //     Mode.Input();
+            //     // input_box->TakeFocus();
+            //     return true;
+            // }
+
+            // if (event == Event::Character('q') || event == Event::Character('Q')) {
+            //     screen.ExitLoopClosure()();
+            //     return true;
+            // }
+
+            // if (event == Event::Character('O')) {
+            //     input_placeholder = "Enter short name...";
+            //     Mode.Open();
+            //     // input_box->TakeFocus();
+            //     return true;
+            // }
         }
 
         if (event == Event::Special({5})) { // Catch Ctrl+e
@@ -307,12 +374,23 @@ void Display::Show() {
     std::thread refresh_ui([&] {
         while (refresh_ui_continue) {
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(0.5s);
+            std::this_thread::sleep_for(0.05s);
+
+            if(Mode.IsNormal()) {
+                input_string = "";
+                tab_selection->TakeFocus();
+            }
+            // } else if(Mode.IsInput() || Mode.IsOpen()) {
+            //     input_box->TakeFocus();
+            // } else if(Mode.IsNormal()) {
+            //     tab_selection->TakeFocus();
+            // }
 
             vim_content = VimInput.GetVimContent();
             if(vim_content != "" || input_string_changed) {
-
+                Mode.Normal();
                 tab_selection->TakeFocus();
+
                 input_string_changed = false;
                 if(vim_content == "")
                     vim_content = input_content;

@@ -150,13 +150,17 @@ json Messages::GetMessages() {
 
 std::string Messages::MakeName() {
     // Create the NameRequest
-    json NameRequest = GetRequest();
+    json NameRequest = {
+        {"model", "gpt-4o-mini"},
+        {"messages", messages}
+    };
 
     // Add the user message
     NameRequest["messages"].push_back({
         {"role", "user"},
         {"content", NAMECONTENTPREFIX}
     });
+    prependToDebugFile(NameRequest.dump(4));
     // std::cout << NameRequest.dump(4) << std::endl;
     return ParseResponse(sendOpenAIRequest(api_key, NameRequest.dump()));
 }

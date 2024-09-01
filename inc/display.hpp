@@ -3,6 +3,7 @@
 #include "messages.hpp"
 #include "markdown.hpp"
 #include "vim.hpp"
+#include "mode.hpp"
 
 #include <stddef.h>    // for size_t
 #include <array>       // for array
