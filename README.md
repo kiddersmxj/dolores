@@ -11,3 +11,4 @@
 - delete chats
 - fancy UI
 - animated UI
+- : to run commands vim style and go into different modes, status in bottome left corner

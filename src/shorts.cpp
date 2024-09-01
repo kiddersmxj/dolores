@@ -37,10 +37,26 @@ std::string Shorts::Return() {
     return readFile();
 }
 
+std::string get_base_name(const std::string& filename) {
+    std::string::size_type dot_pos = filename.find_last_of('.');
+    
+    if (dot_pos == std::string::npos) {
+        return filename; // No extension found
+    } else {
+        return filename.substr(0, dot_pos);
+    }
+}
+
 std::string Shorts::findFile(const std::string& directory, std::string &name) {
-    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.is_regular_file() && entry.path().filename() == name) {
-            return entry.path().string();
+    std::string base_name = get_base_name(name);
+    PrependToDebugFile(base_name);
+
+    for (const auto& entry : fs::directory_iterator(directory)) {
+        if (entry.is_regular_file()) {
+            std::string entry_base_name = get_base_name(entry.path().filename().string());
+            if (entry_base_name == base_name) {
+                return entry.path().string();
+            }
         }
     }
     return "";
@@ -108,7 +124,7 @@ void Shorts::AddLine(std::string Line) {
 
 void Shorts::End() {
     // Construct the full file path
-    std::string filePath = ShortsDir + "/" + Prefix + Suffix;
+    std::string filePath = ShortsDir + "/" + Prefix + Suffix + "." + Prefix;
 
     // Open the file for writing
     std::ofstream outFile(filePath);

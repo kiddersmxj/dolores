@@ -187,9 +187,20 @@ void Display::Show() {
     std::string input_placeholder = "Press e to edit or E to open vim input";
     auto input_option = InputOption();
     input_option.on_enter = [&] {
+        if (!input_string.empty() && input_string.back() == '\n') {
+            input_string.pop_back();
+        }
+
         if(vim_short_input) {
             vim_short_input = false;
-            Vim VimShort(ShortsDir + input_string);
+
+            size_t pos = 0;
+            while (pos < input_string.length() && !std::isdigit(input_string[pos])) {
+                pos++;
+            }
+
+            std::string File = ShortsDir + input_string + "." + input_string.substr(0, pos);
+            Vim VimShort(File);
         } else {
             input_content = input_string;
             input_string_changed = true;

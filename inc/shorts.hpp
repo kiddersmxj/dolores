@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <fstream>
 
+namespace fs = std::filesystem;
+
 class Shorts {
     public:
         Shorts(std::string ShortsDir);
