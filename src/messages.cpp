@@ -67,20 +67,27 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
         std::string role = item.at("role").get<std::string>();
         std::string content = item.at("content").get<std::string>();
 
+
         if (role == USER) {
             if (!current_user_message.empty()) {
                 // If there's an existing user message without an assistant response, add it with an empty assistant message
                 messagePairs.push_back({current_user_message, ""});
                 current_user_message.clear();
+
+                Tokens = Tokens + countTokens(current_user_message);
             }
             current_user_message = content;
         } else if (role == ASSISTANT) {
             current_assistant_message = content;
+
+            Tokens = Tokens + countTokens(current_assistant_message);
+
             // Add the pair immediately after an assistant message
             if (!current_user_message.empty()) {
                 messagePairs.push_back({current_user_message, current_assistant_message});
                 current_user_message.clear();
                 current_assistant_message.clear();
+
             }
         }
     }
@@ -231,6 +238,30 @@ std::string Messages::ParseResponse(const std::string& response) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
         return "";
     }
+}
+
+int Messages::GetTotalTokens() {
+    return Tokens;
+}
+
+std::vector<std::string> Messages::basicTokenize(const std::string& text) {
+    std::regex token_regex("\\w+|\\s+|[^\\w\\s]");
+    auto tokens_begin = std::sregex_iterator(text.begin(), text.end(), token_regex);
+    auto tokens_end = std::sregex_iterator();
+
+    std::vector<std::string> tokens;
+    for (std::sregex_iterator i = tokens_begin; i != tokens_end; ++i) {
+        tokens.push_back((*i).str());
+    }
+
+    return tokens;
+}
+
+int Messages::countTokens(const std::string& text) {
+    auto tokens = SplitString(text, ' ');
+    int count = tokens.size();
+
+    return count;
 }
 
 std::vector<std::string> Messages::SplitString(const std::string& str, char delimiter) {

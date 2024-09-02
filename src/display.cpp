@@ -286,7 +286,21 @@ void Display::Show() {
                 vbox({
                     tab_selection->Render(),
                     emptyElement() | flex,
-                    text(Mode.Get()) | center | color(Color::Magenta),
+                    separator() | color(Color::RGB(153, 153, 153)),
+                    vbox({
+                        hbox({
+                                text(" Tokens: ") | color(Color::GrayDark), 
+                                text(std::to_string(AllMessages.at(tab_index).GetTotalTokens())) | color(Color::Yellow),
+                            }),
+                        hbox({
+                                text(" Model: ") | color(Color::GrayDark), 
+                                text(model) | color(Color::Red),
+                            }),
+                        hbox({
+                                text(" Mode: ") | color(Color::GrayDark), 
+                                text(Mode.Get()) | color(Color::Magenta),
+                            }),
+                    }),
                 }),
                 separator() | color(Color::RGB(153, 153, 153)),
                 vbox({

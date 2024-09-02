@@ -31,10 +31,14 @@ class Messages {
         std::string GetMessagePairString();
         std::deque<std::string> GetUserMessages();
         std::deque<std::string> GetAssistantMessages();
+        int GetTotalTokens();
 
     private:
+        std::vector<std::string> basicTokenize(const std::string& text);
+        int countTokens(const std::string& text);
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
+        int Tokens = 0;
         bool NewChat;
         std::string api_key;
         std::deque<json> messages;
