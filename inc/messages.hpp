@@ -12,10 +12,18 @@
 
 using json = nlohmann::json;
 
+struct MessageOptions {
+    std::string APIKey;
+    std::string Model;
+    int MaxTokens;
+    float Temperature;
+    float TopP;
+};
+
 class Messages {
     public:
-        Messages(std::string system_content, std::string api_key, bool NewChat, std::string Model);
-        Messages(json messages, std::string api_key, std::string Model);
+        Messages(std::string system_content, bool NewChat, MessageOptions Options);
+        Messages(json messages, MessageOptions Options);
         ~Messages();
         void Add(std::string user_content, std::string role);
         std::string Send();
@@ -40,10 +48,12 @@ class Messages {
         int countTokens(const std::string& text);
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
-        std::string model;
+        MessageOptions Options;
+        std::string model = Options.Model;
+        int MaxTokens = Options.MaxTokens;
         int Tokens = 0;
         bool NewChat;
-        std::string api_key;
+        std::string api_key = Options.APIKey;
         std::deque<json> messages;
         std::deque<Messages::MessagePair> messagePairs;
 };

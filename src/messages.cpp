@@ -40,18 +40,16 @@ void appenddebugfile(const std::string& text) {
     }
 }
 
-Messages::Messages(std::string system_content, std::string api_key, bool NewChat, std::string Model) 
-    : model(Model), NewChat(NewChat), api_key(api_key) {
+Messages::Messages(std::string system_content, bool NewChat, MessageOptions Options) 
+    : Options(Options), NewChat(NewChat) {
     messages.push_back({
         {"role", "system"},
         {"content", system_content},
-        {"max_tokens", 150},
-        {"temperature", 0.5}
     });
     messagePairs = parseMessages(messages);
 }
 
-Messages::Messages(json messages, std::string api_key, std::string Model) : model(Model), api_key(api_key), messages(messages) {
+Messages::Messages(json messages, MessageOptions Options) : Options(Options), messages(messages) {
     messagePairs = parseMessages(messages);
 }
 
@@ -144,10 +142,22 @@ std::string Messages::Send() {
 }
 
 json Messages::GetRequest() {
-    json request_payload = {
-        {"model", model},
-        {"messages", messages}
-    };
+    json request_payload;
+    if(MaxTokens > 0) {
+        request_payload = {
+            {"model", model},
+            {"messages", messages},
+            {"max_tokens", MaxTokens},
+            {"temperature", 0.4}
+        };
+    } else {
+        request_payload = {
+            {"model", model},
+            {"messages", messages},
+            {"temperature", 0.4}
+        };
+    }
+
     return request_payload;
 }
 
@@ -159,7 +169,9 @@ std::string Messages::MakeName() {
     // Create the NameRequest
     json NameRequest = {
         {"model", "gpt-4o-mini"},
-        {"messages", messages}
+        {"messages", messages},
+        {"max_tokens", 4},
+        {"temperature", 0.3}
     };
 
     // Add the user message

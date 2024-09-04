@@ -121,7 +121,8 @@ int main(int argc, char** argv) {
         int MessageIndex = 0;
         std::string system_content = SYSTEMCONTENT;
         // Add the initial system message to the history
-        Messages Message(system_content, api_key, 1, DefaultModel);
+        MessageOptions Options = { api_key, DefaultModel, DefaultMaxTokens, 0.4, 0.5 };
+        Messages Message(system_content, 1, Options);
 
         // Interactive loop for repeated user input
         while (true) {
