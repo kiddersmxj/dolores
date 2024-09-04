@@ -55,15 +55,17 @@ void Display::Show() {
     std::vector<std::string> tab_entries = Db.GetNames();
     std::vector<std::string> Files = Db.GetFileNames();
 
+	std::string Model = DefaultModel;
+
     std::deque<Messages> AllMessages;
     long index = 0;
     const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
     for(auto File: Files) {
         if(tab_entries.at(index) == "New Chat") {
-            Messages Messages(SYSTEMCONTENT, api_key, 1);
+            Messages Messages(SYSTEMCONTENT, api_key, 1, Model);
             AllMessages.push_back(Messages);
         } else {
-            Messages Messages(Db.ReadFile(index), api_key);
+            Messages Messages(Db.ReadFile(index), api_key, Model);
             AllMessages.push_back(Messages);
         }
         index++;
@@ -232,6 +234,10 @@ void Display::Show() {
                     input_string_changed = true;
                     Mode.Normal();
                 }
+            } else if(CmdChar == "m") {
+				Model = Args;
+                AllMessages.at(tab_index).SetModel(Args);
+                Mode.Normal();
             }
         } else if(Mode.IsInput()) {
             input_content = input_string;
@@ -294,7 +300,7 @@ void Display::Show() {
                             }),
                         hbox({
                                 text(" Model: ") | color(Color::GrayDark), 
-                                text(model) | color(Color::Red),
+                                text(AllMessages.at(tab_index).GetModel()) | color(Color::Red),
                             }),
                         hbox({
                                 text(" Mode: ") | color(Color::GrayDark), 
@@ -414,7 +420,7 @@ void Display::Show() {
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
-                    Messages Messages(SYSTEMCONTENT, api_key, 1);
+                    Messages Messages(SYSTEMCONTENT, api_key, 1, Model);
                     Messages.Add(vim_content, USER);
 
                     std::string Name = Messages.MakeName();

@@ -14,8 +14,8 @@ using json = nlohmann::json;
 
 class Messages {
     public:
-        Messages(std::string system_content, std::string api_key, bool NewChat);
-        Messages(json messages, std::string api_key);
+        Messages(std::string system_content, std::string api_key, bool NewChat, std::string Model);
+        Messages(json messages, std::string api_key, std::string Model);
         ~Messages();
         void Add(std::string user_content, std::string role);
         std::string Send();
@@ -32,12 +32,15 @@ class Messages {
         std::deque<std::string> GetUserMessages();
         std::deque<std::string> GetAssistantMessages();
         int GetTotalTokens();
+        void SetModel(std::string NewModel);
+        std::string GetModel();
 
     private:
         std::vector<std::string> basicTokenize(const std::string& text);
         int countTokens(const std::string& text);
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
+        std::string model;
         int Tokens = 0;
         bool NewChat;
         std::string api_key;

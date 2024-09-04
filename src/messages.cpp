@@ -40,8 +40,8 @@ void appenddebugfile(const std::string& text) {
     }
 }
 
-Messages::Messages(std::string system_content, std::string api_key, bool NewChat) 
-    : NewChat(NewChat), api_key(api_key) {
+Messages::Messages(std::string system_content, std::string api_key, bool NewChat, std::string Model) 
+    : model(Model), NewChat(NewChat), api_key(api_key) {
     messages.push_back({
         {"role", "system"},
         {"content", system_content},
@@ -51,7 +51,7 @@ Messages::Messages(std::string system_content, std::string api_key, bool NewChat
     messagePairs = parseMessages(messages);
 }
 
-Messages::Messages(json messages, std::string api_key) : api_key(api_key), messages(messages) {
+Messages::Messages(json messages, std::string api_key, std::string Model) : model(Model), api_key(api_key), messages(messages) {
     messagePairs = parseMessages(messages);
 }
 
@@ -274,6 +274,13 @@ std::vector<std::string> Messages::SplitString(const std::string& str, char deli
     return tokens;
 }
 
+void Messages::SetModel(std::string NewModel) {
+    model = NewModel;
+}
+
+std::string Messages::GetModel() {
+    return model;
+}
 
 // Copyright (c) 2024, Maxamilian Kidd-May
 // All rights reserved.
