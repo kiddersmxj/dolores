@@ -18,7 +18,7 @@ class Database {
         std::string generateUID();
         std::vector<std::string> GetFileNames();
         std::vector<std::string> GetNames();
-        json ReadFile(std::string Name);
+        // json ReadFile(std::string Name);
         json ReadFile(int Index);
     private:
         std::vector<std::string> jsonFileNames;

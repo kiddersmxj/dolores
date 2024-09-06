@@ -49,11 +49,8 @@ class Messages {
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
         MessageOptions Options;
-        std::string model = Options.Model;
-        int MaxTokens = Options.MaxTokens;
         int Tokens = 0;
         bool NewChat;
-        std::string api_key = Options.APIKey;
         std::deque<json> messages;
         std::deque<Messages::MessagePair> messagePairs;
 };

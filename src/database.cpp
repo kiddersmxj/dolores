@@ -140,45 +140,47 @@ void Database::SaveFile(const json& request_payload, const std::string& dir, con
     }
 }
 
-json Database::ReadFile(std::string Name) {
-    // Find the index of the Name in jsonNames
-    auto it = std::find(jsonNames.begin(), jsonNames.end(), Name);
-    if (it == jsonNames.end()) {
-        throw std::runtime_error("Name not found in jsonNames");
-    }
+// json Database::ReadFile(std::string Name) {
+//     PrependDebugFile(Name);
+//     // Find the index of the Name in jsonNames
+//     auto it = std::find(jsonNames.begin(), jsonNames.end(), Name);
+//     if (it == jsonNames.end()) {
+//         throw std::runtime_error("Name not found in jsonNames");
+//     }
 
-    // Get the index
-    size_t index = std::distance(jsonNames.begin(), it);
+//     // Get the index
+//     size_t index = std::distance(jsonNames.begin(), it);
 
-    // Use the index to find the corresponding file name in jsonFileNames
-    std::string fileName = ChatArchiveDir + jsonFileNames[index] + ".json";
+//     // Use the index to find the corresponding file name in jsonFileNames
+//     std::string fileName = ChatArchiveDir + jsonFileNames[index] + ".json";
 
-    // Read the file content
-    std::ifstream fileStream(fileName);
-    if (!fileStream.is_open()) {
-        throw std::runtime_error("Unable to open file: " + fileName);
-    }
+//     // Read the file content
+//     std::ifstream fileStream(fileName);
+//     if (!fileStream.is_open()) {
+//         throw std::runtime_error("Unable to open file: " + fileName);
+//     }
 
-    // Parse the JSON content
-    json fileContent;
-    fileStream >> fileContent;
+//     // Parse the JSON content
+//     json fileContent;
+//     fileStream >> fileContent;
 
-    // Close the file stream
-    fileStream.close();
+//     // Close the file stream
+//     fileStream.close();
 
-    // Extract the "messages" part from the JSON structure
-    if (fileContent.is_array() && fileContent.size() >= 3) {
-        // The messages are located in the third element (index 2)
-        const json& thirdElement = fileContent[2];
-        if (thirdElement.is_object() && thirdElement.contains("messages")) {
-            return thirdElement["messages"];
-        } else {
-            throw std::runtime_error("'messages' not found in the expected structure");
-        }
-    } else {
-        throw std::runtime_error("Invalid JSON structure or insufficient elements");
-    }
-}
+//     // Extract the "messages" part from the JSON structure
+//     if (fileContent.is_array() && fileContent.size() >= 3) {
+//         // The messages are located in the third element (index 2)
+//         const json& thirdElement = fileContent[2];
+//         if (thirdElement.is_object() && thirdElement.contains("messages")) {
+//             return fileContent[2][0];
+//             // return thirdElement["messages"];
+//         } else {
+//             throw std::runtime_error("'messages' not found in the expected structure");
+//         }
+//     } else {
+//         throw std::runtime_error("Invalid JSON structure or insufficient elements");
+//     }
+// }
 
 json Database::ReadFile(int Index) {
     // Check if the index is within the bounds of jsonFileNames
@@ -202,23 +204,22 @@ json Database::ReadFile(int Index) {
     // Close the file stream
     fileStream.close();
 
-    // Output the full JSON content for debugging purposes
-    // std::cout << fileContent.dump(4) << std::endl;
-
     // Extract the "messages" part from the JSON structure
     if (fileContent.is_array() && fileContent.size() >= 3) {
+        // return fileContent;
         // The third element (index 2) is expected to be a JSON object
         const json& thirdElement = fileContent[2];
         if (thirdElement.is_object()) {
             // Check if the object contains the "messages" key
-            if (thirdElement.contains("messages")) {
-                return thirdElement["messages"];
-            } else {
+            // if (thirdElement.contains("messages")) {
+                // return thirdElement["messages"];
+            // } else {
                 throw std::runtime_error("'messages' not found in the third element");
-            }
+            // }
         } else if (thirdElement.is_array() && thirdElement.size() > 0 && thirdElement[0].is_object() && thirdElement[0].contains("messages")) {
             // If the third element is an array and the first element of that array contains the "messages" key
-            return thirdElement[0]["messages"];
+            // return thirdElement[0]["messages"];
+            return fileContent[2][0];
         } else {
             throw std::runtime_error("The third element is not in the expected format");
         }

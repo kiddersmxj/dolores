@@ -49,7 +49,9 @@ Messages::Messages(std::string system_content, bool NewChat, MessageOptions Opti
     messagePairs = parseMessages(messages);
 }
 
-Messages::Messages(json messages, MessageOptions Options) : Options(Options), messages(messages) {
+Messages::Messages(json messages, MessageOptions Options) : Options(Options) {
+    prependToDebugFile("1");
+    prependToDebugFile(messages.dump(4));
     messagePairs = parseMessages(messages);
 }
 
@@ -57,14 +59,29 @@ Messages::~Messages() {
 }
 
 std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
+
     std::deque<MessagePair> messagePairs;
     std::string current_user_message;
     std::string current_assistant_message;
 
-    for (const auto& item : j) {
+    if (j.contains("model")) {
+        Options.Model = j.at("model").get<std::string>();
+        prependToDebugFile(Options.Model);
+    }
+    if (j.contains("max_tokens")) {
+        Options.MaxTokens = j.at("max_tokens").get<int>();
+    }
+    if (j.contains("temperature")) {
+        Options.Temperature = j.at("temperature").get<double>();
+    }
+    if (j.contains("top_p")) {
+        Options.TopP = j.at("top_p").get<double>();
+    }
+
+
+    for (const auto& item : j["messages"]) {
         std::string role = item.at("role").get<std::string>();
         std::string content = item.at("content").get<std::string>();
-
 
         if (role == USER) {
             if (!current_user_message.empty()) {
@@ -94,6 +111,9 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     if (!current_user_message.empty()) {
         messagePairs.push_back({current_user_message, ""});
     }
+
+    // You can use the model, max_tokens, and temperature variables as needed here
+    // For example, you can print them or store them in a class member variable
 
     return messagePairs;
 }
@@ -138,21 +158,21 @@ std::string Messages::Send() {
     json request_payload = GetRequest();
 
     // Send the request and get the response
-    return sendOpenAIRequest(api_key, request_payload.dump());
+    return sendOpenAIRequest(Options.APIKey, request_payload.dump());
 }
 
 json Messages::GetRequest() {
     json request_payload;
-    if(MaxTokens > 0) {
+    if(Options.MaxTokens > 0) {
         request_payload = {
-            {"model", model},
+            {"model", Options.Model},
             {"messages", messages},
-            {"max_tokens", MaxTokens},
+            {"max_tokens", Options.MaxTokens},
             {"temperature", 0.4}
         };
     } else {
         request_payload = {
-            {"model", model},
+            {"model", Options.Model},
             {"messages", messages},
             {"temperature", 0.4}
         };
@@ -179,9 +199,9 @@ std::string Messages::MakeName() {
         {"role", "user"},
         {"content", NAMECONTENTPREFIX}
     });
-    prependToDebugFile(NameRequest.dump(4));
+    // prependToDebugFile(NameRequest.dump(4));
     // std::cout << NameRequest.dump(4) << std::endl;
-    return ParseResponse(sendOpenAIRequest(api_key, NameRequest.dump()));
+    return ParseResponse(sendOpenAIRequest(Options.APIKey, NameRequest.dump()));
 }
 
 std::string Messages::CatchParseCode(std::string Response) {
@@ -287,11 +307,11 @@ std::vector<std::string> Messages::SplitString(const std::string& str, char deli
 }
 
 void Messages::SetModel(std::string NewModel) {
-    model = NewModel;
+    Options.Model = NewModel;
 }
 
 std::string Messages::GetModel() {
-    return model;
+    return Options.Model;
 }
 
 // Copyright (c) 2024, Maxamilian Kidd-May

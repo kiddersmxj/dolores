@@ -61,15 +61,18 @@ void Display::Show() {
     long index = 0;
     const char* api_key = std::getenv(OPENAI_API_KEY_ENV_VAR);
     for(auto File: Files) {
-        if(tab_entries.at(index) == "New Chat") {
-			MessageOptions Options = { api_key, Model, DefaultMaxTokens, 0.4, 0.5 };
-            Messages Messages(SYSTEMCONTENT, 1, Options);
-            AllMessages.push_back(Messages);
-        } else {
-			MessageOptions Options = { api_key, Model, DefaultMaxTokens, 0.4, 0.5 };
+        // if(tab_entries.at(index) == "New Chat") {
+			// MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
+            // Messages Messages(SYSTEMCONTENT, 1, Options);
+            // AllMessages.push_back(Messages);
+        // } else {
+		prependDebugFile(File);
+			MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
+			prependDebugFile(Db.ReadFile(index).dump(4));
+			prependDebugFile("out");
             Messages Messages(Db.ReadFile(index), Options);
             AllMessages.push_back(Messages);
-        }
+        // }
         index++;
     }
 
@@ -422,7 +425,7 @@ void Display::Show() {
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
-					MessageOptions Options = { api_key, Model, DefaultMaxTokens, 0.4, 0.5 };
+					MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
                     Messages Messages(SYSTEMCONTENT, 1, Options);
                     Messages.Add(vim_content, USER);
 
