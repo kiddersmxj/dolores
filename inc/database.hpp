@@ -19,6 +19,7 @@ class Database {
         std::vector<std::string> GetFileNames();
         std::vector<std::string> GetNames();
         // json ReadFile(std::string Name);
+        void DeleteFile(int Index);
         json ReadFile(int Index);
     private:
         std::vector<std::string> jsonFileNames;

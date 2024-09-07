@@ -261,6 +261,17 @@ void Display::Show() {
 				Model = Args;
                 AllMessages.at(tab_index).SetModel(Args);
                 Mode.Normal();
+            } else if(CmdChar == "d") {
+				// Check if the index is within bounds
+				if (tab_index < AllMessages.size()) {
+					// Use the erase method to remove the element at the specified index
+					AllMessages.erase(AllMessages.begin() + tab_index);
+					Db.DeleteFile(tab_index);
+				} else {
+					std::cerr << "Index out of bounds" << std::endl;
+				}
+				rebuild_ui();
+				Mode.Normal();
 			}
         } else if(Mode.IsInput()) {
             input_content = input_string;

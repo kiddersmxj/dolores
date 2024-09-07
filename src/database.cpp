@@ -31,7 +31,7 @@ Database::Database() {
             if (fs::create_directories(ChatArchiveDir)) {
                 // std::cout << "Directory created: " << ChatArchiveDir << std::endl;
             } else {
-                std::cerr << "Failed to create directory: " << ChatArchiveDir << std::endl;
+                PrependDebugFile("Failed to create directory: " + ChatArchiveDir);
             }
         }
     } catch (const fs::filesystem_error& e) {
@@ -181,6 +181,21 @@ void Database::SaveFile(const json& request_payload, const std::string& dir, con
 //         throw std::runtime_error("Invalid JSON structure or insufficient elements");
 //     }
 // }
+
+void Database::DeleteFile(int Index) {
+    // Check if the index is within the bounds of jsonFileNames
+    if (Index < 0 || Index >= jsonFileNames.size()) {
+        throw std::out_of_range("Index out of range");
+    }
+
+    // Get the file name using the index
+    const std::string fileName = ChatArchiveDir + jsonFileNames[Index] + ".json";
+    if (std::remove(fileName.c_str()) == 0) {
+        PrependDebugFile("File successfully deleted");
+    } else {
+        std::perror("Error deleting file");
+    }
+}
 
 json Database::ReadFile(int Index) {
     // Check if the index is within the bounds of jsonFileNames
