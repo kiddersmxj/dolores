@@ -4,6 +4,5 @@
 - add file and picture sending
 - mark chat as starred
 - tell her chat name and if off topic she creates new chat
-- delete chats
 - fancy UI
 - animated UI
