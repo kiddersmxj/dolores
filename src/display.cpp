@@ -273,6 +273,9 @@ void Display::Show() {
 				}
 				rebuild_ui();
 				Mode.Normal();
+			} else if (CmdChar == "r") {
+				rebuild_ui();
+				Mode.Normal();
 			}
         } else if(Mode.IsInput()) {
             input_content = input_string;
