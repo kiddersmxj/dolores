@@ -196,12 +196,13 @@ void Display::Show() {
         Db.Get();
         Files = Db.GetFileNames();
         tab_entries = Db.GetNames();
+		
+		tab_selection->DetachAllChildren();
+
         std::vector<ftxui::Component> entries;
         for (size_t i = 0; i < tab_entries.size(); ++i) {
-            entries.push_back(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+            tab_selection->Add(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
         }
-
-        tab_selection = Container::Vertical(entries, &tab_index);
 
         if(Mode.IsNormal()) {
             InputPrefix = "";
