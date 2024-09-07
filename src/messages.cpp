@@ -46,27 +46,33 @@ Messages::Messages(std::string system_content, bool NewChat, MessageOptions Opti
         {"role", "system"},
         {"content", system_content},
     });
-    messagePairs = parseMessages(messages);
+
+    // Create the final JSON object with the "messages" key
+    json j;
+    j["messages"] = json::array();  // Create an empty JSON array for messages
+
+    // Insert deque elements into the messages array
+    for (const auto& message : messages) {
+        j["messages"].push_back(message);  // Push each message into the messages array
+    }
+
+    prependToDebugFile(j.dump(4));
+    prependToDebugFile("pre");
+
+    messagePairs = parseMessages(j);
 }
 
 Messages::Messages(json messages, MessageOptions Options) : Options(Options) {
-    prependToDebugFile("1");
-    prependToDebugFile(messages.dump(4));
+    parseOptions(messages);
     messagePairs = parseMessages(messages);
 }
 
 Messages::~Messages() {
 }
 
-std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
-
-    std::deque<MessagePair> messagePairs;
-    std::string current_user_message;
-    std::string current_assistant_message;
-
+void Messages::parseOptions(const json& j) {
     if (j.contains("model")) {
         Options.Model = j.at("model").get<std::string>();
-        prependToDebugFile(Options.Model);
     }
     if (j.contains("max_tokens")) {
         Options.MaxTokens = j.at("max_tokens").get<int>();
@@ -77,7 +83,15 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     if (j.contains("top_p")) {
         Options.TopP = j.at("top_p").get<double>();
     }
+}
 
+std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
+
+    prependToDebugFile(j.dump(4));
+    prependToDebugFile("inparse");
+    std::deque<MessagePair> messagePairs;
+    std::string current_user_message;
+    std::string current_assistant_message;
 
     for (const auto& item : j["messages"]) {
         std::string role = item.at("role").get<std::string>();
@@ -115,6 +129,21 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     // You can use the model, max_tokens, and temperature variables as needed here
     // For example, you can print them or store them in a class member variable
 
+    messages.clear();
+    for(auto messagePair: messagePairs) {
+        // Add user's message to the history
+        messages.push_back({
+            {"role", USER},
+            {"content", messagePair.user_message}
+        });
+        if(!messagePair.assistant_message.empty()) {
+            messages.push_back({
+                {"role", ASSISTANT},
+                {"content", messagePair.assistant_message}
+            });
+        }
+    }
+
     return messagePairs;
 }
 
@@ -144,13 +173,33 @@ std::string Messages::GetMessagePairString() {
 }
 
 void Messages::Add(std::string user_content, std::string role) {
+    for (const auto& message : messages) {
+        prependToDebugFile(message.dump(4));
+    }
+    prependToDebugFile("before");
+
     // Add user's message to the history
     messages.push_back({
         {"role", role},
         {"content", user_content}
     });
 
-    messagePairs = parseMessages(messages);
+    // Create the final JSON object with the "messages" key
+    json j;
+    j["messages"] = json::array();  // Create an empty JSON array for messages
+
+    // Insert deque elements into the messages array
+    for (const auto& message : messages) {
+        j["messages"].push_back(message);  // Push each message into the messages array
+        prependToDebugFile(message.dump(4));
+    }
+    prependToDebugFile("after");
+
+    prependToDebugFile("pre0");
+    prependToDebugFile(j.dump(4));
+    prependToDebugFile("pre");
+
+    messagePairs = parseMessages(j);
 }
 
 std::string Messages::Send() {
@@ -199,8 +248,6 @@ std::string Messages::MakeName() {
         {"role", "user"},
         {"content", NAMECONTENTPREFIX}
     });
-    // prependToDebugFile(NameRequest.dump(4));
-    // std::cout << NameRequest.dump(4) << std::endl;
     return ParseResponse(sendOpenAIRequest(Options.APIKey, NameRequest.dump()));
 }
 

@@ -42,6 +42,8 @@ class Messages {
         int GetTotalTokens();
         void SetModel(std::string NewModel);
         std::string GetModel();
+        void Delete();
+        void parseOptions(const json& j);
 
     private:
         std::vector<std::string> basicTokenize(const std::string& text);

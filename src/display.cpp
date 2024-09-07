@@ -66,10 +66,7 @@ void Display::Show() {
             // Messages Messages(SYSTEMCONTENT, 1, Options);
             // AllMessages.push_back(Messages);
         // } else {
-		prependDebugFile(File);
 			MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
-			prependDebugFile(Db.ReadFile(index).dump(4));
-			prependDebugFile("out");
             Messages Messages(Db.ReadFile(index), Options);
             AllMessages.push_back(Messages);
         // }
@@ -425,9 +422,13 @@ void Display::Show() {
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
+					prependDebugFile("0");
 					MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
+					prependDebugFile(".1");
                     Messages Messages(SYSTEMCONTENT, 1, Options);
+					prependDebugFile(".2");
                     Messages.Add(vim_content, USER);
+					prependDebugFile(".3");
 
                     std::string Name = Messages.MakeName();
                     Db.SaveFile(Messages.GetRequest(), ChatArchiveDir, Name);
@@ -445,6 +446,8 @@ void Display::Show() {
 
                     rebuild_ui();
                 } else {
+					prependDebugFile(AllMessages.at(ti).GetMessages().dump(4));
+					prependDebugFile("out23");
                     AllMessages.at(ti).Add(vim_content, USER);
                     Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
                 }

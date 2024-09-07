@@ -206,20 +206,18 @@ json Database::ReadFile(int Index) {
 
     // Extract the "messages" part from the JSON structure
     if (fileContent.is_array() && fileContent.size() >= 3) {
-        // return fileContent;
         // The third element (index 2) is expected to be a JSON object
         const json& thirdElement = fileContent[2];
         if (thirdElement.is_object()) {
             // Check if the object contains the "messages" key
-            // if (thirdElement.contains("messages")) {
-                // return thirdElement["messages"];
-            // } else {
+            if (thirdElement.contains("messages")) {
+                return thirdElement;
+            } else {
                 throw std::runtime_error("'messages' not found in the third element");
-            // }
+            }
         } else if (thirdElement.is_array() && thirdElement.size() > 0 && thirdElement[0].is_object() && thirdElement[0].contains("messages")) {
             // If the third element is an array and the first element of that array contains the "messages" key
-            // return thirdElement[0]["messages"];
-            return fileContent[2][0];
+            return thirdElement[0];
         } else {
             throw std::runtime_error("The third element is not in the expected format");
         }
