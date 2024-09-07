@@ -29,7 +29,7 @@ options:
 #define USER "user"
 #define ASSISTANT "assistant"
 
-#define NAMECONTENTPREFIX "maximum 25 char name for this whole message thread (no quotes) start with a capital"
+#define NAMECONTENTPREFIX "Create a title for this prompt and context. The title should be to the point but highlight any uniqueness about the chat and be a maximum of 20 characters, do not respond with anything except this title, do not use quotes around it. eg. Fixing Threads or CMake Libraries or DWM Patching. Do not attempt to answer the prompt before just give it a title/name"
 
 #define UIDRANGE 1000000000LL, 9999999999LL
 
