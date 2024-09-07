@@ -180,16 +180,37 @@ void Display::Show() {
         return rendered_content | reflect(box); // Correct usage
     });
 
-    ftxui::Component tab_selection = Container::Vertical({}, &tab_index);
-
     bool input_string_changed = false;
     std::string input_content = "";
     std::string input_string = "";
+
 
     Mode Mode;
     std::string InputPrefix = "";
 
     std::string input_placeholder = "";
+
+    ftxui::Component tab_selection = Container::Vertical({}, &tab_index);
+
+    auto rebuild_ui = [&]() {
+        Db.Get();
+        Files = Db.GetFileNames();
+        tab_entries = Db.GetNames();
+        std::vector<ftxui::Component> entries;
+        for (size_t i = 0; i < tab_entries.size(); ++i) {
+            entries.push_back(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+        }
+
+        tab_selection = Container::Vertical(entries, &tab_index);
+
+        if(Mode.IsNormal()) {
+            InputPrefix = "";
+            tab_selection->TakeFocus();
+        }
+    };
+
+    rebuild_ui();
+
     auto input_option = InputOption();
     input_option.on_enter = [&] {
         if (!input_string.empty() && input_string.back() == '\n') {
@@ -240,7 +261,7 @@ void Display::Show() {
 				Model = Args;
                 AllMessages.at(tab_index).SetModel(Args);
                 Mode.Normal();
-            }
+			}
         } else if(Mode.IsInput()) {
             input_content = input_string;
             input_string_changed = true;
@@ -262,25 +283,6 @@ void Display::Show() {
     };
 
     ftxui::Component input_box = Input(&input_string, input_placeholder, input_option) | bgcolor(Color::Black);
-
-    auto rebuild_ui = [&]() {
-        Db.Get();
-        Files = Db.GetFileNames();
-        tab_entries = Db.GetNames();
-        std::vector<ftxui::Component> entries;
-        for (size_t i = 0; i < tab_entries.size(); ++i) {
-            entries.push_back(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
-        }
-
-        tab_selection = Container::Vertical(entries, &tab_index);
-
-        if(Mode.IsNormal()) {
-            InputPrefix = "";
-            tab_selection->TakeFocus();
-        }
-    };
-
-    rebuild_ui();
 
     auto main_container = Container::Vertical({
         tab_selection,

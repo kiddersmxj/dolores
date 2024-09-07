@@ -23,7 +23,7 @@ struct MessageOptions {
 class Messages {
     public:
         Messages(std::string system_content, bool NewChat, MessageOptions Options);
-        Messages(json messages, MessageOptions Options);
+        Messages(json messagesjson, MessageOptions Options);
         ~Messages();
         void Add(std::string user_content, std::string role);
         std::string Send();

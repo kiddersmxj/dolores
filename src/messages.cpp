@@ -62,9 +62,12 @@ Messages::Messages(std::string system_content, bool NewChat, MessageOptions Opti
     messagePairs = parseMessages(j);
 }
 
-Messages::Messages(json messages, MessageOptions Options) : Options(Options) {
-    parseOptions(messages);
-    messagePairs = parseMessages(messages);
+Messages::Messages(json messagesjson, MessageOptions Options) : Options(Options) {
+
+    messages = messagesjson["messages"];
+
+    parseOptions(messagesjson);
+    messagePairs = parseMessages(messagesjson);
 }
 
 Messages::~Messages() {
@@ -129,20 +132,19 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     // You can use the model, max_tokens, and temperature variables as needed here
     // For example, you can print them or store them in a class member variable
 
-    messages.clear();
-    for(auto messagePair: messagePairs) {
-        // Add user's message to the history
-        messages.push_back({
-            {"role", USER},
-            {"content", messagePair.user_message}
-        });
-        if(!messagePair.assistant_message.empty()) {
-            messages.push_back({
-                {"role", ASSISTANT},
-                {"content", messagePair.assistant_message}
-            });
-        }
-    }
+//     for(auto messagePair: messagePairs) {
+//         // Add user's message to the history
+//         messages.push_back({
+//             {"role", USER},
+//             {"content", messagePair.user_message}
+//         });
+//         if(!messagePair.assistant_message.empty()) {
+//             messages.push_back({
+//                 {"role", ASSISTANT},
+//                 {"content", messagePair.assistant_message}
+//             });
+//         }
+//     }
 
     return messagePairs;
 }
