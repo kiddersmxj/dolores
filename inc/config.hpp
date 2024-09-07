@@ -6,7 +6,7 @@
 
 const std::string GlowStylesheet = "glowstyle";
 const std::string ChatArchiveDir = HOME + "/.local/share/dolores/chats/";
-const std::string DefaultModel = "gpt-4o";
+const std::string DefaultModel = "gpt-4o-mini";
 const int DefaultMaxTokens = 150;
 
 const std::string ShortsDir = HOME + "/.local/share/dolores/shorts/";
