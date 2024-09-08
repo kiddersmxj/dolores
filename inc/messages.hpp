@@ -58,7 +58,7 @@ class Messages {
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
         std::string generateUID();
-        json CreateConfig(json FileContent);
+        json GetConfig();
         MessageOptions Options;
         int Tokens = 0;
         bool NewChat;
