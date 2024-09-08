@@ -13,8 +13,8 @@ class Database {
         Database();
         ~Database();
         void Get();
-        void SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name);
-        void SaveFile(const json& request_payload, const std::string& dir, std::string Name);
+        void SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name, bool Stared);
+        void SaveFile(const json& request_payload, const std::string& dir, std::string Name, bool Stared);
         std::string generateUID();
         std::vector<std::string> GetFileNames();
         std::vector<std::string> GetNames();

@@ -109,11 +109,11 @@ std::string Database::generateUID() {
     return std::to_string(dis(gen));
 }
 
-void Database::SaveFile(const json& request_payload, const std::string& dir, std::string Name) {
-    SaveFile(request_payload, dir, generateUID(), Name);
+void Database::SaveFile(const json& request_payload, const std::string& dir, std::string Name, bool Stared) {
+    SaveFile(request_payload, dir, generateUID(), Name, Stared);
 }
 
-void Database::SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name) {
+void Database::SaveFile(const json& request_payload, const std::string& dir, const std::string& uid, std::string Name, bool Stared) {
     // Ensure the directory exists
     struct stat info;
     if (stat(dir.c_str(), &info) != 0) {
@@ -129,7 +129,7 @@ void Database::SaveFile(const json& request_payload, const std::string& dir, con
     json JsonFile;
     JsonFile["config"] = json::array();
     JsonFile["config"].push_back({{"Name", Name}});
-    JsonFile["config"].push_back({{"Stared", true}});
+    JsonFile["config"].push_back({{"Stared", Stared}});
     JsonFile["config"].push_back({{"UID", uid}});
     JsonFile["request"] = json::array();
     JsonFile["request"].push_back(request_payload);

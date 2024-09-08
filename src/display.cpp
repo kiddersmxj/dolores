@@ -281,6 +281,11 @@ void Display::Show() {
 			} else if (CmdChar == "r") {
 				rebuild_ui();
 				Mode.Normal();
+			} else if (CmdChar == "s") {
+				AllMessages.at(tab_index).ToggleStar();
+				Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index), AllMessages.at(tab_index).Stared());
+				rebuild_ui();
+				Mode.Normal();
 			}
         } else if(Mode.IsInput()) {
             input_content = input_string;
@@ -454,7 +459,7 @@ void Display::Show() {
 					prependDebugFile(Messages.GetRequest().dump(4));
 
                     std::string Name = Messages.MakeName();
-                    Db.SaveFile(Messages.GetRequest(), ChatArchiveDir, Name);
+                    Db.SaveFile(Messages.GetRequest(), ChatArchiveDir, Name, false);
 					prependDebugFile("44");
 
                     AllMessages.insert(AllMessages.begin() + 1, Messages);
@@ -481,7 +486,7 @@ void Display::Show() {
 					prependDebugFile(AllMessages.at(ti).GetMessages().dump(4));
 					prependDebugFile("out23");
                     AllMessages.at(ti).Add(vim_content, USER);
-                    Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                    Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti), AllMessages.at(ti).Stared());
                 }
 
                 auto future_response = std::async(std::launch::async, [&]() {
@@ -493,7 +498,7 @@ void Display::Show() {
                     auto response = future_response.get(); // Wait for send to complete and get the result
                     if (!response.empty()) {
                         AllMessages.at(ti).Add(AllMessages.at(ti).ParseResponse(response), ASSISTANT);
-                        Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti));
+                        Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti), AllMessages.at(ti).Stared());
                         auto assistantMessages = AllMessages.at(ti).GetAssistantMessages();
                     } else {
                         prependDebugFile("Empty response received."); // Debug

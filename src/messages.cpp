@@ -69,16 +69,38 @@ Messages::Messages(json messagesjson, MessageOptions Options) : Options(Options)
 
     messages = messagesjson["request"][0]["messages"];
 
-    parseOptions(messagesjson["config"]);
+    parseOptions(messagesjson["config"], messagesjson["request"][0]);
     messagePairs = parseMessages(messages);
 }
 
 Messages::~Messages() {
 }
 
-void Messages::parseOptions(const json& j) {
+void Messages::parseOptions(const json& jconfig, const json& j) {
+    prependToDebugFile(j.dump(4));
+    prependToDebugFile("parseOptions");
+    prependToDebugFile(jconfig.dump(4));
+    prependToDebugFile("parseOptions config");
+
+    for(auto c: jconfig) {
+        prependToDebugFile(c.dump(4));
+        prependToDebugFile("cin");
+        if(c.contains("Name")) {
+            Options.Name = c.at("Name").get<std::string>();
+            prependToDebugFile(Options.Name);
+            prependToDebugFile("NAME");
+        }
+        if(c.contains("Stared")) {
+            Options.Stared = c.at("Stared").get<bool>();
+        }
+        if(c.contains("UID")) {
+            Options.UID = c.at("UID").get<std::string>();
+        }
+    }
+
     if (j.contains("model")) {
         Options.Model = j.at("model").get<std::string>();
+        prependToDebugFile(Options.Model);
     }
     if (j.contains("max_tokens")) {
         Options.MaxTokens = j.at("max_tokens").get<int>();
@@ -365,6 +387,16 @@ std::string Messages::generateUID() {
     std::mt19937_64 gen(rd()); // Use a 64-bit Mersenne Twister engine
     std::uniform_int_distribution<long long> dis(UIDRANGE); // Range for 10 digits
     return std::to_string(dis(gen));
+}
+
+json Messages::GetConfig() {
+    json JsonFile;
+    JsonFile["config"] = json::array();
+    JsonFile["config"].push_back({{"Name", Options.Name}});
+    JsonFile["config"].push_back({{"Stared", Options.Stared}});
+    JsonFile["config"].push_back({{"UID", Options.UID}});
+
+    return JsonFile;
 }
 
 // Copyright (c) 2024, Maxamilian Kidd-May

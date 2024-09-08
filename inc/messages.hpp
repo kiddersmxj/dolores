@@ -48,7 +48,7 @@ class Messages {
         void SetModel(std::string NewModel);
         std::string GetModel();
         void Delete();
-        void parseOptions(const json& j);
+        void parseOptions(const json& jconfig, const json& j);
         void ToggleStar();
         bool Stared();
 
@@ -58,6 +58,7 @@ class Messages {
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
         std::string generateUID();
+        json CreateConfig(json FileContent);
         MessageOptions Options;
         int Tokens = 0;
         bool NewChat;

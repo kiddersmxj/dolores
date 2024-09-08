@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
             }
 
             // Save the JSON data to a file
-            Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
+            Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name, false);
 
             // Parse the response and get the assistant's reply
             std::string assistant_reply = Message.ParseResponse(Message.Send());
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
                 std::cout << "Total tokens: " << GetTokens(user_content, assistant_reply) << std::endl;
 
                 // Save the updated JSON data after the assistant's reply
-                Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name);
+                Db.SaveFile(Message.GetRequest(), ChatArchiveDir, uid, Name, false);
 
                 // Output the assistant's response with Markdown formatting
                 outputMarkdownWithGlow(assistant_reply);
