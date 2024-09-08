@@ -82,13 +82,12 @@ void Database::Get() {
                 json j;
                 file >> j;
 
-                // Check if the "Name" key exists and add its value to the jsonNames vector
-                for (const auto& item : j) {
-                    if (item.is_array() && !item.empty() && item[0].is_string() && item[0] == "Name") {
-                        Name = item[1].get<std::string>();
-                        jsonNames.push_back(Name);
-                    }
-                }
+                // PrependDebugFile(j.dump(4));
+                // PrependDebugFile(j["config"][0]["Name"].dump(4));
+                // PrependDebugFile("item");
+
+                Name = j["config"][0]["Name"].get<std::string>();
+                jsonNames.push_back(Name);
             }
             // std::cout << fileData.filePath.filename().string() << " - " << Name << std::endl;
         }
@@ -97,6 +96,9 @@ void Database::Get() {
     } catch (const std::exception& e) {
         std::cerr << "General error: " << e.what() << std::endl;
     }
+    for(auto j:jsonNames)
+        PrependDebugFile("[" + j + "]");
+    PrependDebugFile("jsonNames in db");
 }
 
 // Function to generate a random 10-digit UID as a string
@@ -124,15 +126,24 @@ void Database::SaveFile(const json& request_payload, const std::string& dir, con
 
     std::string filename = dir + "/" + uid + ".json";
 
-    json NamedFile = {
-        {"Name", Name},
-        {"UID", uid},
-        {request_payload}
-    };
+    json JsonFile;
+    JsonFile["config"] = json::array();
+    JsonFile["config"].push_back({{"Name", Name}});
+    JsonFile["config"].push_back({{"Stared", true}});
+    JsonFile["config"].push_back({{"UID", uid}});
+    JsonFile["request"] = json::array();
+    JsonFile["request"].push_back(request_payload);
+
+    PrependDebugFile(JsonFile["request"][0]["messages"].dump(4));
+    PrependDebugFile("Mes");
+    PrependDebugFile(JsonFile["request"][0].dump(4));
+    PrependDebugFile("req w/ 0");
+    PrependDebugFile(JsonFile.dump(4));
+    PrependDebugFile("save");
 
     std::ofstream file(filename); // Open file for writing (will overwrite if it exists)
     if (file.is_open()) {
-        file << NamedFile.dump(4); // Pretty-print JSON with an indent of 4 spaces
+        file << JsonFile.dump(4); // Pretty-print JSON with an indent of 4 spaces
         file.close();
         // std::cout << "Saved conversation to " << filename << " - " << Name << std::endl;
     } else {
@@ -218,6 +229,11 @@ json Database::ReadFile(int Index) {
 
     // Close the file stream
     fileStream.close();
+
+    PrependDebugFile(fileContent.dump(4));
+    PrependDebugFile("initial");
+
+    return fileContent;
 
     // Extract the "messages" part from the JSON structure
     if (fileContent.is_array() && fileContent.size() >= 3) {

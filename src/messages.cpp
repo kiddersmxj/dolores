@@ -56,18 +56,21 @@ Messages::Messages(std::string system_content, bool NewChat, MessageOptions Opti
         j["messages"].push_back(message);  // Push each message into the messages array
     }
 
-    prependToDebugFile(j.dump(4));
+    prependToDebugFile(j["messages"].dump(4));
     prependToDebugFile("pre");
 
-    messagePairs = parseMessages(j);
+    messagePairs = parseMessages(j["messages"]);
 }
 
 Messages::Messages(json messagesjson, MessageOptions Options) : Options(Options) {
 
-    messages = messagesjson["messages"];
+    prependToDebugFile(messagesjson["request"].dump(4));
+    prependToDebugFile("creat");
 
-    parseOptions(messagesjson);
-    messagePairs = parseMessages(messagesjson);
+    messages = messagesjson["request"][0]["messages"];
+
+    parseOptions(messagesjson["config"]);
+    messagePairs = parseMessages(messages);
 }
 
 Messages::~Messages() {
@@ -96,7 +99,9 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     std::string current_user_message;
     std::string current_assistant_message;
 
-    for (const auto& item : j["messages"]) {
+    for (const auto& item : j) {
+        prependToDebugFile(item.dump(4));
+        prependToDebugFile("parseItem");
         std::string role = item.at("role").get<std::string>();
         std::string content = item.at("content").get<std::string>();
 
@@ -128,23 +133,6 @@ std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
     if (!current_user_message.empty()) {
         messagePairs.push_back({current_user_message, ""});
     }
-
-    // You can use the model, max_tokens, and temperature variables as needed here
-    // For example, you can print them or store them in a class member variable
-
-//     for(auto messagePair: messagePairs) {
-//         // Add user's message to the history
-//         messages.push_back({
-//             {"role", USER},
-//             {"content", messagePair.user_message}
-//         });
-//         if(!messagePair.assistant_message.empty()) {
-//             messages.push_back({
-//                 {"role", ASSISTANT},
-//                 {"content", messagePair.assistant_message}
-//             });
-//         }
-//     }
 
     return messagePairs;
 }
@@ -198,10 +186,10 @@ void Messages::Add(std::string user_content, std::string role) {
     prependToDebugFile("after");
 
     prependToDebugFile("pre0");
-    prependToDebugFile(j.dump(4));
+    prependToDebugFile(j["message"].dump(4));
     prependToDebugFile("pre");
 
-    messagePairs = parseMessages(j);
+    messagePairs = parseMessages(j["messages"]);
 }
 
 std::string Messages::Send() {
@@ -361,6 +349,22 @@ void Messages::SetModel(std::string NewModel) {
 
 std::string Messages::GetModel() {
     return Options.Model;
+}
+
+void Messages::ToggleStar() {
+    Options.Stared = !Options.Stared;
+}
+
+bool Messages::Stared() {
+    return Options.Stared;
+}
+
+// Function to generate a random 10-digit UID as a string
+std::string Messages::generateUID() {
+    std::random_device rd;  // Seed for the random number engine
+    std::mt19937_64 gen(rd()); // Use a 64-bit Mersenne Twister engine
+    std::uniform_int_distribution<long long> dis(UIDRANGE); // Range for 10 digits
+    return std::to_string(dis(gen));
 }
 
 // Copyright (c) 2024, Maxamilian Kidd-May

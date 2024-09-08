@@ -201,7 +201,11 @@ void Display::Show() {
 
         std::vector<ftxui::Component> entries;
         for (size_t i = 0; i < tab_entries.size(); ++i) {
-            tab_selection->Add(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+			if(AllMessages.at(i).Stared()) {
+				tab_selection->Add(MenuEntry("*" + tab_entries[i]) | color(Color::Yellow) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+			} else {
+				tab_selection->Add(MenuEntry(tab_entries[i]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
+			}
         }
 
         if(Mode.IsNormal()) {
@@ -268,6 +272,7 @@ void Display::Show() {
 					// Use the erase method to remove the element at the specified index
 					AllMessages.erase(AllMessages.begin() + tab_index);
 					Db.DeleteFile(tab_index);
+					// Add something to setup scrolling on new tab_index file
 				} else {
 					std::cerr << "Index out of bounds" << std::endl;
 				}
@@ -439,29 +444,39 @@ void Display::Show() {
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
-					prependDebugFile("0");
+					prependDebugFile("NEW CHAT");
 					MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
-					prependDebugFile(".1");
+					prependDebugFile("11");
                     Messages Messages(SYSTEMCONTENT, 1, Options);
-					prependDebugFile(".2");
+					prependDebugFile("22");
                     Messages.Add(vim_content, USER);
-					prependDebugFile(".3");
+					prependDebugFile("33");
+					prependDebugFile(Messages.GetRequest().dump(4));
 
                     std::string Name = Messages.MakeName();
                     Db.SaveFile(Messages.GetRequest(), ChatArchiveDir, Name);
+					prependDebugFile("44");
 
                     AllMessages.insert(AllMessages.begin() + 1, Messages);
 
+					prependDebugFile("55");
                     Files = Db.GetFileNames();
                     tab_entries = Db.GetNames();
+
+					for(auto f: Files) {
+						prependDebugFile("[" + f + "]");
+					}
+					prependDebugFile("files");
+					for(auto t: tab_entries) {
+						prependDebugFile("[" + t + "]");
+					}
+					prependDebugFile("tabentries");
 
                     if((ti - 1) == tab_index)
                         tab_index = 1;
 
-                    tab_selection->Add(MenuEntry(tab_entries[2]) | color(Color::GrayDark) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 25));
-                    tab_selection->Render();
-
                     rebuild_ui();
+					prependDebugFile("66");
                 } else {
 					prependDebugFile(AllMessages.at(ti).GetMessages().dump(4));
 					prependDebugFile("out23");

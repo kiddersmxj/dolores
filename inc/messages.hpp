@@ -9,6 +9,7 @@
 #include <fstream>
 #include <regex>
 #include <nlohmann/json.hpp>
+#include <random>
 
 using json = nlohmann::json;
 
@@ -18,6 +19,10 @@ struct MessageOptions {
     int MaxTokens;
     float Temperature;
     float TopP;
+
+    std::string Name;
+    std::string UID;
+    bool Stared;
 };
 
 class Messages {
@@ -44,12 +49,15 @@ class Messages {
         std::string GetModel();
         void Delete();
         void parseOptions(const json& j);
+        void ToggleStar();
+        bool Stared();
 
     private:
         std::vector<std::string> basicTokenize(const std::string& text);
         int countTokens(const std::string& text);
         std::vector<std::string> SplitString(const std::string& str, char delimiter);
         std::string CatchParseCode(std::string Response);
+        std::string generateUID();
         MessageOptions Options;
         int Tokens = 0;
         bool NewChat;
