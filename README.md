@@ -2,7 +2,6 @@
 
 ## TODO:
 - add file and picture sending
-- mark chat as starred
 - tell her chat name and if off topic she creates new chat
 - fancy UI
 - animated UI
