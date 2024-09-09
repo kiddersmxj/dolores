@@ -50,36 +50,6 @@ Markdown::Markdown(const std::string& markdownContent, int maxWidth)
     };
 }
 
-std::string Markdown::CreateSeparator(int length, std::string Title) {
-    if (length < 2) {
-        return ""; // If length is less than 2, return an empty string
-    }
-
-    std::wstring Sep = L"";
-
-    // Convert the Title from std::string to std::wstring
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::wstring wTitle = converter.from_bytes(Title);
-
-    int titleLength = wTitle.length();
-
-    // Calculate the remaining space after the title
-    int remainingSpace = length - 2 - titleLength;
-
-    if (remainingSpace >= 0) {
-        Sep += wTitle;
-        Sep += std::wstring(remainingSpace, L'─');
-    } else {
-        // If title is too long, truncate it and fill the remaining space
-        wTitle = wTitle.substr(0, length);
-        Sep += wTitle;
-    }
-
-    // Convert the wstring to a string using UTF-8 encoding
-    return converter.to_bytes(Sep);
-}
-
-
 std::string Markdown::CreateTopBorder(int length, std::string Title) {
     if (length < 2) {
         return ""; // If length is less than 2, return an empty string
