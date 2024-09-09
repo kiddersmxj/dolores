@@ -314,25 +314,34 @@ void Display::Show() {
                     input_string_changed = true;
                     Mode.Normal();
                 }
+
             } else if(CmdChar == "m") {
 				Model = Args;
                 AllMessages.at(tab_index).SetModel(Args);
                 Mode.Normal();
+
             } else if(CmdChar == "d") {
 				// Check if the index is within bounds
-				if (tab_index < AllMessages.size()) {
+				if (tab_index != 0 && tab_index < AllMessages.size()) {
 					// Use the erase method to remove the element at the specified index
 					AllMessages.erase(AllMessages.begin() + tab_index);
 					Db.DeleteFile(tab_index);
 					// Add something to setup scrolling on new tab_index file
+					prependDebugFile(std::to_string(tab_index) + ":" + std::to_string(AllMessages.size()));
+					if(tab_index == AllMessages.size()) {
+						prependDebugFile("ghghgh");
+						tab_index--;
+					}
 				} else {
 					std::cerr << "Index out of bounds" << std::endl;
 				}
 				rebuild_ui();
 				Mode.Normal();
+
 			} else if (CmdChar == "r") {
 				rebuild_ui();
 				Mode.Normal();
+
 			} else if (CmdChar == "s") {
 				AllMessages.at(tab_index).ToggleStar();
 				Db.SaveFile(AllMessages.at(tab_index).GetRequest(), ChatArchiveDir, Files.at(tab_index), tab_entries.at(tab_index), AllMessages.at(tab_index).Stared());
