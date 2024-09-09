@@ -134,12 +134,12 @@ void Database::SaveFile(const json& request_payload, const std::string& dir, con
     JsonFile["request"] = json::array();
     JsonFile["request"].push_back(request_payload);
 
-    PrependDebugFile(JsonFile["request"][0]["messages"].dump(4));
-    PrependDebugFile("Mes");
-    PrependDebugFile(JsonFile["request"][0].dump(4));
-    PrependDebugFile("req w/ 0");
-    PrependDebugFile(JsonFile.dump(4));
-    PrependDebugFile("save");
+    // PrependDebugFile(JsonFile["request"][0]["messages"].dump(4));
+    // PrependDebugFile("Mes");
+    // PrependDebugFile(JsonFile["request"][0].dump(4));
+    // PrependDebugFile("req w/ 0");
+    // PrependDebugFile(JsonFile.dump(4));
+    // PrependDebugFile("save");
 
     std::ofstream file(filename); // Open file for writing (will overwrite if it exists)
     if (file.is_open()) {
@@ -230,8 +230,8 @@ json Database::ReadFile(int Index) {
     // Close the file stream
     fileStream.close();
 
-    PrependDebugFile(fileContent.dump(4));
-    PrependDebugFile("initial");
+    // PrependDebugFile(fileContent.dump(4));
+    // PrependDebugFile("initial");
 
     return fileContent;
 

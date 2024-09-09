@@ -56,16 +56,16 @@ Messages::Messages(std::string system_content, bool NewChat, MessageOptions Opti
         j["messages"].push_back(message);  // Push each message into the messages array
     }
 
-    prependToDebugFile(j["messages"].dump(4));
-    prependToDebugFile("pre");
+    // prependToDebugFile(j["messages"].dump(4));
+    // prependToDebugFile("pre");
 
     messagePairs = parseMessages(j["messages"]);
 }
 
 Messages::Messages(json messagesjson, MessageOptions Options) : Options(Options) {
 
-    prependToDebugFile(messagesjson["request"].dump(4));
-    prependToDebugFile("creat");
+    // prependToDebugFile(messagesjson["request"].dump(4));
+    // prependToDebugFile("creat");
 
     messages = messagesjson["request"][0]["messages"];
 
@@ -77,18 +77,18 @@ Messages::~Messages() {
 }
 
 void Messages::parseOptions(const json& jconfig, const json& j) {
-    prependToDebugFile(j.dump(4));
-    prependToDebugFile("parseOptions");
-    prependToDebugFile(jconfig.dump(4));
-    prependToDebugFile("parseOptions config");
+    // prependToDebugFile(j.dump(4));
+    // prependToDebugFile("parseOptions");
+    // prependToDebugFile(jconfig.dump(4));
+    // prependToDebugFile("parseOptions config");
 
     for(auto c: jconfig) {
-        prependToDebugFile(c.dump(4));
-        prependToDebugFile("cin");
+        // prependToDebugFile(c.dump(4));
+        // prependToDebugFile("cin");
         if(c.contains("Name")) {
             Options.Name = c.at("Name").get<std::string>();
-            prependToDebugFile(Options.Name);
-            prependToDebugFile("NAME");
+            // prependToDebugFile(Options.Name);
+            // prependToDebugFile("NAME");
         }
         if(c.contains("Stared")) {
             Options.Stared = c.at("Stared").get<bool>();
@@ -100,7 +100,7 @@ void Messages::parseOptions(const json& jconfig, const json& j) {
 
     if (j.contains("model")) {
         Options.Model = j.at("model").get<std::string>();
-        prependToDebugFile(Options.Model);
+        // prependToDebugFile(Options.Model);
     }
     if (j.contains("max_tokens")) {
         Options.MaxTokens = j.at("max_tokens").get<int>();
@@ -115,15 +115,15 @@ void Messages::parseOptions(const json& jconfig, const json& j) {
 
 std::deque<Messages::MessagePair> Messages::parseMessages(const json& j) {
 
-    prependToDebugFile(j.dump(4));
-    prependToDebugFile("inparse");
+    // prependToDebugFile(j.dump(4));
+    // prependToDebugFile("inparse");
     std::deque<MessagePair> messagePairs;
     std::string current_user_message;
     std::string current_assistant_message;
 
     for (const auto& item : j) {
-        prependToDebugFile(item.dump(4));
-        prependToDebugFile("parseItem");
+        // prependToDebugFile(item.dump(4));
+        // prependToDebugFile("parseItem");
         std::string role = item.at("role").get<std::string>();
         std::string content = item.at("content").get<std::string>();
 
@@ -184,11 +184,42 @@ std::string Messages::GetMessagePairString() {
     return ss.str();
 }
 
-void Messages::Add(std::string user_content, std::string role) {
-    for (const auto& message : messages) {
-        prependToDebugFile(message.dump(4));
+std::string Messages::EditUserMessage(int MessageIndex) {
+    int Index(0);
+    int ActualIndex(0);
+    std::string content = "NODATA";
+
+    for(auto m: messages) {
+        std::string role = m.at("role").get<std::string>();
+        prependToDebugFile(std::to_string(Index) + ":" + std::to_string(MessageIndex) + ":" + std::to_string(ActualIndex));
+
+        if(role == "user") {
+            if(Index == MessageIndex) {
+                content = m.at("content").get<std::string>();
+                prependToDebugFile(std::to_string(Index) + ": " + content);
+                break;
+            }
+            Index++;
+        }
+        ActualIndex++;
     }
-    prependToDebugFile("before");
+
+    // prependToDebugFile("pretrunc");
+    messages.erase(messages.begin() + ActualIndex, messages.end());
+
+    // for(auto m: messages) {
+    //     prependToDebugFile(m.dump(4));
+    // }
+    // prependToDebugFile("trunctaed:");
+
+    return content;
+}
+
+void Messages::Add(std::string user_content, std::string role) {
+    // for (const auto& message : messages) {
+        // prependToDebugFile(message.dump(4));
+    // }
+    // prependToDebugFile("before");
 
     // Add user's message to the history
     messages.push_back({
@@ -203,13 +234,13 @@ void Messages::Add(std::string user_content, std::string role) {
     // Insert deque elements into the messages array
     for (const auto& message : messages) {
         j["messages"].push_back(message);  // Push each message into the messages array
-        prependToDebugFile(message.dump(4));
+        // prependToDebugFile(message.dump(4));
     }
-    prependToDebugFile("after");
+    // prependToDebugFile("after");
 
-    prependToDebugFile("pre0");
-    prependToDebugFile(j["message"].dump(4));
-    prependToDebugFile("pre");
+    // prependToDebugFile("pre0");
+    // prependToDebugFile(j["message"].dump(4));
+    // prependToDebugFile("pre");
 
     messagePairs = parseMessages(j["messages"]);
 }

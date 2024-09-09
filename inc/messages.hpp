@@ -51,6 +51,8 @@ class Messages {
         void parseOptions(const json& jconfig, const json& j);
         void ToggleStar();
         bool Stared();
+        std::string CreateSeparator(int length, std::string Title);
+        std::string EditUserMessage(int MessageIndex);
 
     private:
         std::vector<std::string> basicTokenize(const std::string& text);

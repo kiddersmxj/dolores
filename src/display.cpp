@@ -128,12 +128,41 @@ void Display::Show() {
             Messages.push_back(Pairs{userElement, assistantElement});
         }
 
+		int Index(0);
         // Join user and assistant messages
         std::deque<Element> elements;
         for (auto it = Messages.begin(); it != Messages.end(); ++it) {
             auto& Message = *it;
-            
-            elements.push_back(separator() | color(Color::GrayDark));
+
+			Element Separator;
+			if (max_line_width < 2) {
+				Separator = separator();
+			} else {
+				std::wstring Sep = L"";
+
+				// Convert the Title from std::string to std::wstring
+				std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+				std::wstring wTitle = converter.from_bytes("[" + std::to_string(Index) + "]");
+				Index++;
+
+				int titleLength = wTitle.length();
+
+				// Calculate the remaining space after the title
+				int remainingSpace = max_line_width - 2 - titleLength + 10;
+
+				if (remainingSpace >= 0) {
+					Sep += wTitle;
+					Sep += std::wstring(remainingSpace, L'─');
+				} else {
+					// If title is too long, truncate it and fill the remaining space
+					wTitle = wTitle.substr(0, max_line_width);
+					Sep += wTitle;
+				}
+				// Convert the wstring to a string using UTF-8 encoding
+				Separator = text(converter.to_bytes(Sep));
+			}
+
+            elements.push_back(Separator | color(Color::GrayDark));
             
             for (auto& M : Message.User)
                 elements.push_back(M);
@@ -216,6 +245,8 @@ void Display::Show() {
 
     rebuild_ui();
 
+	bool vim_lock = false;
+
     auto input_option = InputOption();
     input_option.on_enter = [&] {
         if (!input_string.empty() && input_string.back() == '\n') {
@@ -239,6 +270,7 @@ void Display::Show() {
             tab_selection->TakeFocus();
         } else if(Mode.IsCommand()) {
             if(CmdChar == "q") {
+				VimInput.RemoveVimFile();
                 screen.ExitLoopClosure()();
             } else if(CmdChar == "o") {
                 Mode.Open();
@@ -253,11 +285,31 @@ void Display::Show() {
                     Mode.Normal();
                 }
             } else if(CmdChar == "E") {
+				if(k::IsInteger(Args)) {
+					std::string OldMessage = AllMessages.at(tab_index).EditUserMessage(std::stoi(Args));
+					prependDebugFile(OldMessage);
+					if(!(OldMessage == "NODATA")) {
+						VimInput.SetContent(OldMessage);
+						VimInput.OpenVim();
+						Mode.Normal();
+					}
+					Mode.Normal();
+				}
                 VimInput.OpenVim();
                 Mode.Normal();
             } else if(CmdChar == "e") {
                 Mode.Input();
-                if(!Args.empty()) {
+				if(k::IsInteger(Args)) {
+					std::string OldMessage = AllMessages.at(tab_index).EditUserMessage(std::stoi(Args));
+					prependDebugFile(OldMessage);
+					if(!(OldMessage == "NODATA")) {
+						vim_lock = true;
+						VimInput.SetContent(OldMessage);
+						VimInput.OpenVim();
+						Mode.Normal();
+					}
+					Mode.Normal();
+				} else if(!Args.empty()) {
                     input_content = Args;
                     input_string_changed = true;
                     Mode.Normal();
@@ -416,6 +468,11 @@ void Display::Show() {
             return true;
         }
 
+		// if (event == Event::Character('q') || event == Event::Character('Q')) {
+		//     screen.ExitLoopClosure()();
+		//     return true;
+		// }
+
         return false;
     });
 
@@ -436,7 +493,17 @@ void Display::Show() {
             // }
 
             vim_content = VimInput.GetVimContent();
-            if(vim_content != "" || input_string_changed) {
+			if(vim_content != input_content) {
+				if(vim_lock) {
+					vim_lock = false;
+					input_content = vim_content;
+				} else {
+					if(vim_content != "")
+						input_string_changed = true;
+				}
+			}
+
+            if(input_string_changed) {
                 Mode.Normal();
                 tab_selection->TakeFocus();
 
@@ -449,42 +516,42 @@ void Display::Show() {
                 int ti = tab_index;
                 if(tab_entries.at(ti) == "New Chat") {
                     ti++;
-					prependDebugFile("NEW CHAT");
+					// prependDebugFile("NEW CHAT");
 					MessageOptions Options = { api_key, Model, 0, 0.4, 0.5 };
-					prependDebugFile("11");
+					// prependDebugFile("11");
                     Messages Messages(SYSTEMCONTENT, 1, Options);
-					prependDebugFile("22");
+					// prependDebugFile("22");
                     Messages.Add(vim_content, USER);
-					prependDebugFile("33");
-					prependDebugFile(Messages.GetRequest().dump(4));
+					// prependDebugFile("33");
+					// prependDebugFile(Messages.GetRequest().dump(4));
 
                     std::string Name = Messages.MakeName();
                     Db.SaveFile(Messages.GetRequest(), ChatArchiveDir, Name, false);
-					prependDebugFile("44");
+					// prependDebugFile("44");
 
                     AllMessages.insert(AllMessages.begin() + 1, Messages);
 
-					prependDebugFile("55");
+					// prependDebugFile("55");
                     Files = Db.GetFileNames();
                     tab_entries = Db.GetNames();
 
-					for(auto f: Files) {
-						prependDebugFile("[" + f + "]");
-					}
-					prependDebugFile("files");
-					for(auto t: tab_entries) {
-						prependDebugFile("[" + t + "]");
-					}
-					prependDebugFile("tabentries");
+					// for(auto f: Files) {
+					// 	prependDebugFile("[" + f + "]");
+					// }
+					// prependDebugFile("files");
+					// for(auto t: tab_entries) {
+					// 	prependDebugFile("[" + t + "]");
+					// }
+					// prependDebugFile("tabentries");
 
                     if((ti - 1) == tab_index)
                         tab_index = 1;
 
                     rebuild_ui();
-					prependDebugFile("66");
+					// prependDebugFile("66");
                 } else {
-					prependDebugFile(AllMessages.at(ti).GetMessages().dump(4));
-					prependDebugFile("out23");
+					// prependDebugFile(AllMessages.at(ti).GetMessages().dump(4));
+					// prependDebugFile("out23");
                     AllMessages.at(ti).Add(vim_content, USER);
                     Db.SaveFile(AllMessages.at(ti).GetRequest(), ChatArchiveDir, Files.at(ti), tab_entries.at(ti), AllMessages.at(ti).Stared());
                 }

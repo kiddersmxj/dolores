@@ -40,6 +40,9 @@ bool Vim::RemoveVimFile() {
     }
 }
 
+void Vim::SetContent(std::string Content) {
+    k::ExecCmd("echo \"" + Content + "\" > " + filename);
+}
 
 // Copyright (c) 2024, Maxamilian Kidd-May
 // All rights reserved.

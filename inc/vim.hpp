@@ -12,6 +12,7 @@ class Vim {
         std::string GetVimContent();
         bool RemoveVimFile();
         int OpenVim();
+        void SetContent(std::string Content);
     private:
         std::string uid;
         std::string filename;
