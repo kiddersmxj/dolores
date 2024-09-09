@@ -96,9 +96,9 @@ void Database::Get() {
     } catch (const std::exception& e) {
         std::cerr << "General error: " << e.what() << std::endl;
     }
-    for(auto j:jsonNames)
-        PrependDebugFile("[" + j + "]");
-    PrependDebugFile("jsonNames in db");
+    // for(auto j:jsonNames)
+    //     PrependDebugFile("[" + j + "]");
+    // PrependDebugFile("jsonNames in db");
 }
 
 // Function to generate a random 10-digit UID as a string
