@@ -15,7 +15,6 @@ class Markdown {
     public:
         Markdown(const std::string& markdownContent, int maxWidth = 80);
         std::deque<ftxui::Element> RenderMarkdown();
-        std::string CreateSeparator(int length, std::string Title);
 
     private:
         std::vector<std::string> SplitString(const std::string& str, char delimiter);

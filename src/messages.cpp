@@ -191,12 +191,12 @@ std::string Messages::EditUserMessage(int MessageIndex) {
 
     for(auto m: messages) {
         std::string role = m.at("role").get<std::string>();
-        prependToDebugFile(std::to_string(Index) + ":" + std::to_string(MessageIndex) + ":" + std::to_string(ActualIndex));
+        // prependToDebugFile(std::to_string(Index) + ":" + std::to_string(MessageIndex) + ":" + std::to_string(ActualIndex));
 
         if(role == "user") {
             if(Index == MessageIndex) {
                 content = m.at("content").get<std::string>();
-                prependToDebugFile(std::to_string(Index) + ": " + content);
+                // prependToDebugFile(std::to_string(Index) + ": " + content);
                 break;
             }
             Index++;

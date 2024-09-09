@@ -327,9 +327,8 @@ void Display::Show() {
 					AllMessages.erase(AllMessages.begin() + tab_index);
 					Db.DeleteFile(tab_index);
 					// Add something to setup scrolling on new tab_index file
-					prependDebugFile(std::to_string(tab_index) + ":" + std::to_string(AllMessages.size()));
+					// prependDebugFile(std::to_string(tab_index) + ":" + std::to_string(AllMessages.size()));
 					if(tab_index == AllMessages.size()) {
-						prependDebugFile("ghghgh");
 						tab_index--;
 					}
 				} else {
